@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Square.h"
+#include "Tile.h"
 
-#define BOARD_SIZE 3
+#define BOARD_SIZE 9
 class Board
 {
 
@@ -11,6 +11,6 @@ public:
 	~Board();
 
 private:
-	Square _aBoard[BOARD_SIZE][BOARD_SIZE];
+	Tile _aBoard[BOARD_SIZE][BOARD_SIZE];
 };
 
