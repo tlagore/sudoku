@@ -152,25 +152,3 @@ void Board::printBoard()
 	}
 }
 
-void Board::printBoard()
-{
-	printf("=========================================================================\n");
-
-	for (int row = 0; row < BOARD_SIZE; row++)
-	{
-		printf("||");
-		for (int column = 0; column < BOARD_SIZE; column += 3)
-		{
-			printf("%4d|%4d|%4d||", board[row][column], board[row][column + 1], board[row][column + 2]);
-		}
-		printf("\n");
-		if ((row % 3) == 0)
-			printf("=========================================================================\n");
-		else if(row != 8)
-			printf("--------------------------------------------------------------------------\n");
-	}
-
-
-	printf("=========================================================================\n");
-}
-
