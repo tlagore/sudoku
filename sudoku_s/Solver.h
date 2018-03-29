@@ -11,6 +11,8 @@ public:
 	
 	void solve();
 	Board getBoard();
+
+	void reset(Board *board);
 	
 	~Solver();
 

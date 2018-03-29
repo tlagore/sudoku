@@ -18,7 +18,8 @@ void Solver::generatePossibleValues()
 	{
 		for (int column = 0; column < BOARD_SIZE; column++)
 		{
-			generateTileValues(row, column);
+			if(this->board->getTile(row, column).getActualValue() == -1)
+				generateTileValues(row, column);
 		}
 	}
 }
@@ -94,7 +95,7 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 void Solver::solve()
 {
 	generatePossibleValues();
-
+	int numSolved = 0;
 	while (singleValueTiles.size() != 0)
 	{
 
@@ -105,12 +106,16 @@ void Solver::solve()
 
 		this->board->setTileActualValue(value, row, col);
 
+		numSolved++;
+
 		cancelRow(value, row, col);
 		cancelColumn(value, row, col);
 		cancelBox(value, row, col);
 
 		singleValueTiles.pop_front();
 	}
+
+	cout << "Num solved: " << numSolved << endl;
 }
 
 void Solver::cancelRow(int value, int row, int column)
@@ -175,6 +180,12 @@ void Solver::removeValue(Tile tile, int value)
 Board Solver::getBoard()
 {
 	return *board;
+}
+
+void Solver::reset(Board *board) {
+	this->singleValueTiles.clear();
+	this->board = NULL;
+	this->board = board;
 }
 
 Solver::~Solver()

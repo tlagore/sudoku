@@ -51,8 +51,6 @@ Tile Board::getTile(int row, int column)
 
 void Board::setTileActualValue(int value, int row, int column)
 {
-	cout << "Row: " << row << endl;
-	cout << "Column: " << column << endl;
 	board[row][column]->setActualValue(value);
 }
 
