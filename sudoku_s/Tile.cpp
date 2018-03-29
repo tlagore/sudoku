@@ -45,3 +45,33 @@ void Tile::clearPossibleValues()
 	this->possibleValues.clear();
 }
 
+int Tile::getColumn() 
+{ 
+	return column; 
+}
+
+int Tile::getRow()
+{
+	 return row;
+}
+
+
+unordered_set<int> Tile::getPossibleValues()
+{
+	return possibleValues;
+}
+
+
+int Tile::getActualValue()
+{ 
+	return actualValue;
+}
+
+void Tile::setActualValue(int value) 
+{
+	if (value >= 1 && value <= 9)
+	{
+		this->actualValue = value;
+		this->possibleValues.clear();
+	}
+}

@@ -25,17 +25,23 @@ void Solver::generatePossibleValues()
 
 void Solver::generateTileValues(int row, int column)
 {
-	//Tile tile = board->getTile(row, column);
 	unordered_set<int> possibleValues = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-	
+
 	removeRowValues(row, column, &possibleValues);
 	removeColValues(row, column, &possibleValues);
 	removeBoxValues(row, column, &possibleValues);
 
 	board->setTilePossibleValues(row, column, possibleValues);
+
+	if (possibleValues.size() == 1)
+	{
+		Tile tile = this->board->getTile(row, column);
+		this->singleValueTiles.push_back(this->board->getTile(row, column));
+	}
+
 }
 
-void Solver::removeRowValues(int row, int column, unordered_set<int>*possibleValues) 
+void Solver::removeRowValues(int row, int column, unordered_set<int>*possibleValues)
 {
 	int curValue;
 
@@ -88,22 +94,85 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 void Solver::solve()
 {
 	generatePossibleValues();
-	for (int row = 0; row < BOARD_SIZE; row++) {
-		for (int column = 0; column < BOARD_SIZE; column++)
+
+	while (singleValueTiles.size() != 0)
+	{
+
+		Tile tile = singleValueTiles.front();
+		int row = tile.getRow();
+		int col = tile.getColumn();
+		int value = *tile.getPossibleValues().begin();
+
+
+		this->board->setTileActualValue(value, row, col);
+
+		cancelRow(value, row, col);
+		cancelColumn(value, row, col);
+		cancelBox(value, row, col);
+
+		singleValueTiles.pop_front();
+	}
+}
+
+void Solver::cancelRow(int value, int row, int column)
+{
+
+	for (int col = 0; col < BOARD_SIZE; col++)
+	{
+		if (col == column)
+			continue;
+		else
 		{
-			Tile curTile = this->board->getTile(row, column);
-			
-			if (curTile.getActualValue() == -1 && curTile.getPossibleValues().size() == 1) {
-				curTile.setActualValue(*curTile.getPossibleValues().begin());
-				//cancel row
-				//cancel column
-				//cancel box
-			}
+			Tile tile = board->getTile(row, col);
+			removeValue(tile, value);
+		}
+	}
+
+}
+
+void Solver::cancelColumn(int value, int rowCurrTile, int column)
+{
+	for (int row = 0; row < BOARD_SIZE; row++)
+	{
+		if (row == rowCurrTile)
+			continue;
+		else
+		{
+
+			Tile tile = board->getTile(row, column);
+			removeValue(tile, value);
 		}
 	}
 }
 
+void Solver::cancelBox(int value, int row, int column)
+{
+	int boxRow = row - (row % BOX_SIZE);
+	int boxCol = column - (column % BOX_SIZE);
 
+	for (int curRow = boxRow; curRow < boxRow + BOX_SIZE; curRow++) 
+	{
+		for (int curCol = boxCol; curCol < boxCol + BOX_SIZE; curCol++) 
+		{
+			if (curCol == column && curRow == row)
+				continue;
+			
+			Tile tile = board->getTile(curRow, curCol);
+			removeValue(tile, value);
+			
+		}
+	}
+}
+
+void Solver::removeValue(Tile tile, int value)
+{
+	if (tile.getPossibleValues().size() > 1)
+	{
+		board->removePossibleValue(value, tile.getRow(), tile.getColumn());
+		if (tile.getPossibleValues().size() == 1)
+			singleValueTiles.push_back(tile);
+	}
+}
 Board Solver::getBoard()
 {
 	return *board;

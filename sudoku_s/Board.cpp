@@ -1,4 +1,4 @@
- #include "stdafx.h"
+#include "stdafx.h"
 #include "Board.h"
 
 
@@ -46,11 +46,13 @@ Board::~Board()
 
 Tile Board::getTile(int row, int column)
 {
-	return *board[row][column];
+	return *(board[row][column]);
 }
 
 void Board::setTileActualValue(int value, int row, int column)
 {
+	cout << "Row: " << row << endl;
+	cout << "Column: " << column << endl;
 	board[row][column]->setActualValue(value);
 }
 
@@ -71,13 +73,13 @@ bool Board::isValidState()
 	{
 		for (int column = 0; column < BOARD_SIZE; column++)
 		{
-			if (!isValidRow(*board[row][column]))
+			if (!isValidRow(*(board[row][column])))
 				return false;
 
-			if (!isValidColumn(*board[row][column]))
+			if (!isValidColumn(*(board[row][column])))
 				return false;
 				
-			if (!isValidBox(*board[row][column]))
+			if (!isValidBox(*(board[row][column])))
 				return false;
 		}
 	}
@@ -90,7 +92,7 @@ bool Board::isValidRow(Tile tile)
 	
 	for (int column = 0; column < BOARD_SIZE; column++)
 	{
-		Tile currTile = *board[currRow][column];
+		Tile currTile = *(board[currRow][column]);
 
 		if (currTile.getColumn() == tile.getColumn())
 			continue;
@@ -108,7 +110,7 @@ bool Board::isValidColumn(Tile tile)
 
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
-		Tile currTile = *board[row][currColumn];
+		Tile currTile = *(board[row][currColumn]);
 
 		if (currTile.getRow() == tile.getRow())
 			continue;
@@ -134,7 +136,7 @@ bool Board::isValidBox(Tile tile)
 	{
 		for (int column = columnStartingPointOfBox; column < boxColumnMax; column++)
 		{
-			Tile currTile = *board[row][column];
+			Tile currTile = *(board[row][column]);
 
 			if (currTile.getRow() == currRow && currTile.getColumn() == currColumn)
 				continue;
@@ -145,7 +147,10 @@ bool Board::isValidBox(Tile tile)
 
 	return true;
 }
-#define ZERO '0'
+void Board::removePossibleValue(int value, int row, int column)
+{
+	this->board[row][column]->removePossibleValue(value);
+}
 void Board::printBoard()
 {
 	printf("===================================================================\n");

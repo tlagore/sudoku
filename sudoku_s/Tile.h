@@ -16,22 +16,21 @@ public:
 
 	~Tile();
 
-	int getActualValue() { return actualValue; }
-	void setActualValue(int value) {
-		if (value >= 1 && value <= 9)
-			this->actualValue = value;
-	}
 
 	void addPossibleValue(int value);
 	void removePossibleValue(int value);
 	void clearPossibleValues();
 
-	int getRow() { return row; }
+	int getColumn();
 
-	int getColumn() { return column; }
-	unordered_set<int> getPossibleValues() { 	
-		return possibleValues; 
-	};
+	int getRow();
+
+	
+	unordered_set<int> getPossibleValues();
+
+	int getActualValue();
+
+	void setActualValue(int value);
 
 private:
 	int actualValue;

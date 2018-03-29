@@ -5,6 +5,7 @@
 #define INTIAL_VALUE -1
 #define BOARD_SIZE 9
 #define BOX_SIZE 3
+#define ZERO '0'
 class Board
 {
 
@@ -20,6 +21,7 @@ public:
 	bool isValidRow(Tile tile);
 	bool isValidColumn(Tile tile);
 	bool isValidBox(Tile tile);
+	void removePossibleValue(int value, int row, int column);
 	void printBoard();
 
 private:
