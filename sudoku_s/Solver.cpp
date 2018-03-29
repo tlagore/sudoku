@@ -88,7 +88,19 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 void Solver::solve()
 {
 	generatePossibleValues();
-
+	for (int row = 0; row < BOARD_SIZE; row++) {
+		for (int column = 0; column < BOARD_SIZE; column++)
+		{
+			Tile curTile = this->board->getTile(row, column);
+			
+			if (curTile.getActualValue() == -1 && curTile.getPossibleValues().size() == 1) {
+				curTile.setActualValue(*curTile.getPossibleValues().begin());
+				//cancel row
+				//cancel column
+				//cancel box
+			}
+		}
+	}
 }
 
 
