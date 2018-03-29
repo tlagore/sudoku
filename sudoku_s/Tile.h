@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <vector>
+#include <unordered_set>
 #define MAX_SUDOKU_VALUE 9
 
 using namespace std;
@@ -22,14 +22,20 @@ public:
 			this->actualValue = value;
 	}
 
+	void addPossibleValue(int value);
+	void removePossibleValue(int value);
+	void clearPossibleValues();
+
 	int getRow() { return row; }
 
 	int getColumn() { return column; }
-	vector<int> getPossibleValues() { return possibleValues; };
+	unordered_set<int> getPossibleValues() { 	
+		return possibleValues; 
+	};
 
 private:
 	int actualValue;
-	vector<int> possibleValues;
+	unordered_set<int> possibleValues;
 	int row;
 	int column;
 };

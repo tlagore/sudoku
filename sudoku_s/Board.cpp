@@ -13,6 +13,15 @@ Board::Board()
 	}
 }
 
+Board::Board(const Board &rhs)
+{
+	for (int row = 0; row < BOARD_SIZE; row++) {
+		for (int column = 0; column < BOARD_SIZE; column++) {
+			this->board[row][column] = rhs.board[row][column];
+		}
+	}
+}
+
 Board::Board(int inputForNewBoard[BOARD_SIZE][BOARD_SIZE])
 {
 	for (int row = 0; row < BOARD_SIZE; row++)
@@ -43,6 +52,16 @@ Tile Board::getTile(int row, int column)
 void Board::setTileActualValue(int value, int row, int column)
 {
 	board[row][column]->setActualValue(value);
+}
+
+void Board::setTilePossibleValues(int row, int col, unordered_set<int> possibleVals)
+{
+	Tile *tile = this->board[row][col];
+	tile->clearPossibleValues();
+
+	for (auto value : possibleVals) {
+		tile->addPossibleValue(value);
+	}
 }
 
 bool Board::isValidState()
