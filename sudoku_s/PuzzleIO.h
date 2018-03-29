@@ -3,7 +3,6 @@
 #include <string>
 #include "Board.h"
 
-#define PUZZLE_SIZE 9
 /*
 PuzzleIO Handles puzzle input and output
 
@@ -17,7 +16,7 @@ public:
 	vector<Board*> readFromFile(string fileName);
 private:
 	bool fileExists(string fileName);
-	void generateBoardArray(string line, int puzzle[PUZZLE_SIZE][PUZZLE_SIZE]);
+	void generateBoardArray(string line, int puzzle[BOARD_SIZE][BOARD_SIZE]);
 
 };
 

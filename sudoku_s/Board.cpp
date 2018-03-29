@@ -126,4 +126,29 @@ bool Board::isValidBox(Tile tile)
 
 	return true;
 }
+#define ZERO '0'
+void Board::printBoard()
+{
+	printf("===================================================================\n");
+	char space = ' ';
+	for (int row = 0; row < BOARD_SIZE; row++)
+	{
+		printf("||");
+		for (int column = 0; column < BOARD_SIZE; column += 3)
+		{
+			int first = board[row][column]->getActualValue();
+			int second = board[row][column + 1]->getActualValue();
+			int third = board[row][column + 2]->getActualValue();
+			first = first == -1 ? (int)space : first + (int)ZERO;
+			second = second == -1 ? (int)space : second + (int)ZERO;
+			third = third == -1 ? (int)space : third + (int)ZERO;
+			printf("%3c%-3c|%3c%-3c|%3c%-3c||", first, space, second, space, third, space);
+		}
+		printf("\n");
+		if ((row+1) % 3 == 0)
+			printf("====================================================================\n");
+		else if(row != 8)
+			printf("--------------------------------------------------------------------\n");
+	}
+}
 

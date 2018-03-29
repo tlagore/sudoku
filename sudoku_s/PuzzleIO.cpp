@@ -23,18 +23,18 @@ vector<Board*> PuzzleIO::readFromFile(string fileName)
 	int value;
 	vector<Board*> boards;
 	
-	int puzzle[PUZZLE_SIZE][PUZZLE_SIZE];
+	int puzzle[BOARD_SIZE][BOARD_SIZE];
 
 	if (fileExists(fileName)) {
 		std::ifstream file(fileName);
 		if (file.is_open()) {
 			while (getline(file, line)) {
-				if (line.length() == PUZZLE_SIZE * PUZZLE_SIZE) {
+				if (line.length() == BOARD_SIZE * BOARD_SIZE) {
 					generateBoardArray(line, puzzle);
 					boards.push_back(new Board(puzzle));
 					
 				}
-				else if (line.length() == PUZZLE_SIZE) {
+				else if (line.length() == BOARD_SIZE) {
 					printf("multi line puzzle...\n");
 				}
 				else {
@@ -66,7 +66,7 @@ bool PuzzleIO::fileExists(string fileName)
 	Takes in a sudoku board in string format. Currently assumed to be exaclty 81 valid integer characters in length.
 	Converts the string into integers, then inserts them into a supplied 9x9 array
 */
-void PuzzleIO::generateBoardArray(string line, int puzzle[PUZZLE_SIZE][PUZZLE_SIZE])
+void PuzzleIO::generateBoardArray(string line, int puzzle[BOARD_SIZE][BOARD_SIZE])
 {
 	int row = 0;
 	int column = 0;
