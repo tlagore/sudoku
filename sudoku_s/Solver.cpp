@@ -103,7 +103,6 @@ void Solver::solve()
 		int col = tile.getColumn();
 		int value = *tile.getPossibleValues().begin();
 
-
 		this->board->setTileActualValue(value, row, col);
 
 		cancelRow(value, row, col);
@@ -169,8 +168,8 @@ void Solver::removeValue(Tile tile, int value)
 	if (tile.getPossibleValues().size() > 1)
 	{
 		board->removePossibleValue(value, tile.getRow(), tile.getColumn());
-		if (tile.getPossibleValues().size() == 1)
-			singleValueTiles.push_back(tile);
+		if (board->getTile(tile.getRow(), tile.getColumn()).getPossibleValues().size() == 1)
+			singleValueTiles.push_back(board->getTile(tile.getRow(), tile.getColumn()));
 	}
 }
 Board Solver::getBoard()
