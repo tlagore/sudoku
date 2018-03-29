@@ -11,10 +11,13 @@ Board::Board()
 			board[row][column] = new Tile(INTIAL_VALUE, row, column);
 		}
 	}
+
+	tilesToSolve = 81;
 }
 
 Board::Board(const Board &rhs)
 {
+	this->tilesToSolve = rhs.tilesToSolve;
 	for (int row = 0; row < BOARD_SIZE; row++) {
 		for (int column = 0; column < BOARD_SIZE; column++) {
 			this->board[row][column] = rhs.board[row][column];
@@ -24,11 +27,14 @@ Board::Board(const Board &rhs)
 
 Board::Board(int inputForNewBoard[BOARD_SIZE][BOARD_SIZE])
 {
+	tilesToSolve = BOARD_SIZE * BOARD_SIZE;
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
 		for (int column = 0; column < BOARD_SIZE; column++)
 		{
 			board[row][column] = new Tile(inputForNewBoard[row][column], row, column);
+			if (inputForNewBoard[row][column] != -1)
+				tilesToSolve--;
 		}
 	}
 
@@ -51,6 +57,9 @@ Tile Board::getTile(int row, int column)
 
 void Board::setTileActualValue(int value, int row, int column)
 {
+	if (board[row][column]->getActualValue() == -1)
+		tilesToSolve--;
+
 	board[row][column]->setActualValue(value);
 }
 
@@ -62,6 +71,15 @@ void Board::setTilePossibleValues(int row, int col, unordered_set<int> possibleV
 	for (auto value : possibleVals) {
 		tile->addPossibleValue(value);
 	}
+}
+
+void Board::addTilePossibleValue(int value, int row, int col) {
+	this->board[row][col]->addPossibleValue(value);
+}
+
+void Board::clearTilePossibleValues(int row, int col)
+{
+	this->board[row][col]->clearPossibleValues();
 }
 
 bool Board::isValidState()
@@ -148,6 +166,10 @@ bool Board::isValidBox(Tile tile)
 void Board::removePossibleValue(int value, int row, int column)
 {
 	this->board[row][column]->removePossibleValue(value);
+}
+bool Board::isSolved()
+{
+	return tilesToSolve == 0;
 }
 void Board::printBoard()
 {

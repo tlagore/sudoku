@@ -89,33 +89,103 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 			}
 		}
 	}
-
 }
 
 void Solver::solve()
 {
 	generatePossibleValues();
 	int numSolved = 0;
-	while (singleValueTiles.size() != 0)
-	{
 
-		Tile tile = singleValueTiles.front();
-		int row = tile.getRow();
-		int col = tile.getColumn();
-		int value = *tile.getPossibleValues().begin();
+	while (!this->board->isSolved()) {
+		while (singleValueTiles.size() != 0)
+		{
 
-		this->board->setTileActualValue(value, row, col);
+			Tile tile = singleValueTiles.front();
+			int row = tile.getRow();
+			int col = tile.getColumn();
+			int value = *tile.getPossibleValues().begin();
 
-		numSolved++;
+			this->board->setTileActualValue(value, row, col);
 
-		cancelRow(value, row, col);
-		cancelColumn(value, row, col);
-		cancelBox(value, row, col);
+			numSolved++;
 
-		singleValueTiles.pop_front();
+			cancelRow(value, row, col);
+			cancelColumn(value, row, col);
+			cancelBox(value, row, col);
+
+			singleValueTiles.pop_front();
+		}
+
+		if (!this->board->isSolved()) {
+			if (!performAdvancedSolve())
+			{
+				printf("No possible new solutions!\n");
+				getchar();
+				break;
+			}
+		}
 	}
 
 	cout << "Num solved: " << numSolved << endl;
+}
+
+bool Solver::performAdvancedSolve() 
+{
+	bool foundSolution = false;
+	int count = 0;
+	for (int row = 0; row < BOARD_SIZE; row++)
+	{
+		for (int column = 0; column < BOARD_SIZE; column++)
+		{
+			if (this->board->getTile(row, column).getActualValue() == -1) {				
+				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
+				count++;
+			}
+		}
+	}
+
+	return foundSolution;
+}
+
+bool Solver::checkBoxLineReduction(int row, int column) 
+{
+	int boxRow = row - (row % BOX_SIZE);
+	int boxCol = column - (column % BOX_SIZE);
+	unordered_set<int> possibleUnion;
+	Tile otherTile,
+		tile = this->board->getTile(row, column);
+	bool foundSolution = false;
+
+	for (int r = boxRow; r < boxRow + BOX_SIZE ; r++)
+	{
+		for (int c = boxCol; c < boxCol + BOX_SIZE; c++)
+		{
+			//printf("%d %d %d\n", boxRow, boxCol, boxCol + BOX_SIZE);
+			if (c == column && r == row)
+				continue;
+
+			otherTile = this->board->getTile(r, c);
+			if (otherTile.getActualValue() == -1) {
+				for (auto possible : otherTile.getPossibleValues())
+					possibleUnion.insert(possible);
+			}
+
+		}
+	}
+
+	for (auto possible : tile.getPossibleValues()) 
+	{
+		if (possibleUnion.find(possible) == possibleUnion.end()) 
+		{
+			this->board->clearTilePossibleValues(tile.getRow(), tile.getColumn());
+			this->board->addTilePossibleValue(possible, tile.getRow(), tile.getColumn());
+			this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
+			foundSolution = true;
+			break;
+		}
+	}
+
+	return foundSolution;
 }
 
 void Solver::cancelRow(int value, int row, int column)

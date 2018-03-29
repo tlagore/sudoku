@@ -10,6 +10,7 @@ public:
 	Solver(Board *board);
 	
 	void solve();
+	
 	Board getBoard();
 
 	void reset(Board *board);
@@ -29,5 +30,7 @@ private:
 	void cancelRow(int value, int row, int column);
 	void cancelColumn(int value, int row, int column);
 	void removeValue(Tile tile, int value);
+	bool performAdvancedSolve();
+	bool checkBoxLineReduction(int row, int column);
 };
 
