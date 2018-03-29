@@ -17,10 +17,11 @@ PuzzleIO::~PuzzleIO()
 {
 }
 
-void PuzzleIO::readFromFile(string fileName)
+vector<Board*> PuzzleIO::readFromFile(string fileName)
 {
 	string line;
 	int value;
+	vector<Board*> boards;
 	
 	int puzzle[PUZZLE_SIZE][PUZZLE_SIZE];
 
@@ -30,12 +31,8 @@ void PuzzleIO::readFromFile(string fileName)
 			while (getline(file, line)) {
 				if (line.length() == PUZZLE_SIZE * PUZZLE_SIZE) {
 					generateBoardArray(line, puzzle);
-					for (int r = 0; r < PUZZLE_SIZE; r++) {
-						for (int c = 0; c < PUZZLE_SIZE; c++) {
-							printf("%2d ", puzzle[r][c]);
-						}
-						cout << endl;
-					}
+					boards.push_back(new Board(puzzle));
+					
 				}
 				else if (line.length() == PUZZLE_SIZE) {
 					printf("multi line puzzle...\n");
@@ -49,6 +46,8 @@ void PuzzleIO::readFromFile(string fileName)
 	else {
 		throw std::invalid_argument("File does not exist.");
 	}
+
+	return boards;
 }
 
 bool PuzzleIO::fileExists(string fileName)

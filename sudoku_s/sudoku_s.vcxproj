@@ -167,6 +167,9 @@
     <ClCompile Include="sudoku_s.cpp" />
     <ClCompile Include="Tile.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\sudoku.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
