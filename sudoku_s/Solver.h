@@ -14,7 +14,8 @@ public:
 	Board getBoard();
 
 	void reset(Board *board);
-	
+
+
 	~Solver();
 
 private:
@@ -31,6 +32,11 @@ private:
 	void cancelColumn(int value, int row, int column);
 	void removeValue(Tile tile, int value);
 	bool performAdvancedSolve();
+	bool checkRowUnion(int row, int column);
+	bool checkColumnUnion(int row, int column);
+	bool checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile);
+	void printPossibleValues();
+	bool isOpenTile(int value);
 	bool checkBoxLineReduction(int row, int column);
 };
 

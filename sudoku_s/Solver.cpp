@@ -18,7 +18,10 @@ void Solver::generatePossibleValues()
 	{
 		for (int column = 0; column < BOARD_SIZE; column++)
 		{
-			if(this->board->getTile(row, column).getActualValue() == -1)
+			Tile tile = this->board->getTile(row, column);
+			int actualTileValue = tile.getActualValue();
+
+			if(isOpenTile(actualTileValue))
 				generateTileValues(row, column);
 		}
 	}
@@ -95,8 +98,10 @@ void Solver::solve()
 {
 	generatePossibleValues();
 	int numSolved = 0;
+	
+	while (!this->board->isSolved()) 
+	{
 
-	while (!this->board->isSolved()) {
 		while (singleValueTiles.size() != 0)
 		{
 
@@ -116,11 +121,13 @@ void Solver::solve()
 			singleValueTiles.pop_front();
 		}
 
-		if (!this->board->isSolved()) {
+		if (!this->board->isSolved()) 
+		{
 			if (!performAdvancedSolve())
 			{
 				printf("No possible new solutions!\n");
 				getchar();
+				printPossibleValues();
 				break;
 			}
 		}
@@ -132,19 +139,123 @@ void Solver::solve()
 bool Solver::performAdvancedSolve() 
 {
 	bool foundSolution = false;
-	int count = 0;
+
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
 		for (int column = 0; column < BOARD_SIZE; column++)
 		{
-			if (this->board->getTile(row, column).getActualValue() == -1) {				
+			int tileValue = this->board->getTile(row, column).getActualValue();
+		
+			if (isOpenTile(tileValue)) 
+			{
 				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
-				count++;
+				foundSolution = checkRowUnion(row, column) || foundSolution;
+				foundSolution = checkColumnUnion(row, column) || foundSolution;
 			}
 		}
 	}
 
 	return foundSolution;
+}
+
+
+bool Solver::checkRowUnion(int currRow, int currColumn)
+{
+	bool foundSolution = false;
+	Tile otherTile,
+		tile = this->board->getTile(currRow, currColumn);
+	int actualTileValue;
+	unordered_set<int> possibleRowUnionValues;
+	for (int col = 0; col < BOARD_SIZE; col++)
+	{
+		otherTile = this->board->getTile(currRow, col);
+		actualTileValue = otherTile.getActualValue();
+		if (col == currColumn)
+			continue;
+
+		if (isOpenTile(actualTileValue))
+		{
+			for (auto possible : otherTile.getPossibleValues())
+			{
+				possibleRowUnionValues.insert(possible);
+			}
+		}
+	}
+
+	foundSolution = checkForValueMissing(possibleRowUnionValues, tile);
+
+	return foundSolution;
+}
+
+bool Solver::checkColumnUnion(int currRow, int currColumn)
+{
+	bool foundSolution = false;
+	Tile otherTile,
+		tile = this->board->getTile(currRow, currColumn);
+	int actualTileValue;
+	unordered_set<int> possibleRowUnionValues;
+	for (int row = 0; row < BOARD_SIZE; row++)
+	{
+		otherTile = this->board->getTile(row, currColumn);
+		actualTileValue = otherTile.getActualValue();
+		if (row == currRow)
+			continue;
+
+		if (isOpenTile(actualTileValue))
+		{
+			for (auto possible : otherTile.getPossibleValues())
+			{
+				possibleRowUnionValues.insert(possible);
+			}
+		}
+	}
+
+	foundSolution = checkForValueMissing(possibleRowUnionValues, tile);
+
+	return foundSolution;
+}
+
+bool Solver::checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile)
+{
+	for (auto possible : tile.getPossibleValues())
+	{
+		if (possibleUnionValues.find(possible) == possibleUnionValues.end())
+		{
+			this->board->clearTilePossibleValues(tile.getRow(), tile.getColumn());
+			this->board->addTilePossibleValue(possible, tile.getRow(), tile.getColumn());
+			this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
+			return true;	
+		}
+	}
+	return false;
+}
+
+void Solver::printPossibleValues()
+{
+	for (int row = 0; row < BOARD_SIZE; row++)
+	{
+		for (int col = 0; col < BOARD_SIZE; col++)
+		{
+			Tile tile = this->board->getTile(row, col);
+			int actualTileValue = tile.getActualValue();
+			
+			if (isOpenTile(actualTileValue))
+			{
+				printf("Tile(row %d, col %d): ", row, col);
+				unordered_set<int> possibleValuesOfTile = tile.getPossibleValues();
+				for (auto possible : possibleValuesOfTile)
+				{
+					printf("%d ", possible);
+				}
+				printf("\n");
+			}
+		}
+	}
+}
+
+bool Solver::isOpenTile(int value)
+{
+	return (value == -1);
 }
 
 bool Solver::checkBoxLineReduction(int row, int column) 
@@ -160,12 +271,14 @@ bool Solver::checkBoxLineReduction(int row, int column)
 	{
 		for (int c = boxCol; c < boxCol + BOX_SIZE; c++)
 		{
-			//printf("%d %d %d\n", boxRow, boxCol, boxCol + BOX_SIZE);
 			if (c == column && r == row)
 				continue;
 
 			otherTile = this->board->getTile(r, c);
-			if (otherTile.getActualValue() == -1) {
+			int actualTileValue = otherTile.getActualValue();
+			
+			if (isOpenTile(actualTileValue)) 
+			{
 				for (auto possible : otherTile.getPossibleValues())
 					possibleUnion.insert(possible);
 			}
@@ -173,18 +286,18 @@ bool Solver::checkBoxLineReduction(int row, int column)
 		}
 	}
 
-	for (auto possible : tile.getPossibleValues()) 
-	{
-		if (possibleUnion.find(possible) == possibleUnion.end()) 
-		{
-			this->board->clearTilePossibleValues(tile.getRow(), tile.getColumn());
-			this->board->addTilePossibleValue(possible, tile.getRow(), tile.getColumn());
-			this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
-			foundSolution = true;
-			break;
-		}
-	}
-
+	//for (auto possible : tile.getPossibleValues()) 
+	//{
+	//	if (possibleUnion.find(possible) == possibleUnion.end()) 
+	//	{
+	//		this->board->clearTilePossibleValues(tile.getRow(), tile.getColumn());
+	//		this->board->addTilePossibleValue(possible, tile.getRow(), tile.getColumn());
+	//		this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
+	//		foundSolution = true;
+	//		break;
+	//	}
+	//}
+	foundSolution = checkForValueMissing(possibleUnion, tile);
 	return foundSolution;
 }
 
