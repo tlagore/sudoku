@@ -34,6 +34,12 @@ private:
 	bool performAdvancedSolve();
 	bool checkRowUnion(int row, int column);
 	bool checkColumnUnion(int row, int column);
+	bool checkUnsolvedCancel(int currRow, int currColumn);
+	void cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn);
+	void cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn);
+	bool isInBoxRow(int boxCol, int currCol);
+	bool isInBoxCol(int boxRow, int boxCol);
+	int checkForValueInBox(int currPossible, int currRow, int currColumn);
 	bool checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile);
 	void printPossibleValues();
 	bool isOpenTile(int value);

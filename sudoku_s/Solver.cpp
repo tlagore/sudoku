@@ -136,6 +136,56 @@ void Solver::solve()
 	cout << "Num solved: " << numSolved << endl;
 }
 
+void Solver::cancelRow(int value, int row, int column)
+{
+
+	for (int col = 0; col < BOARD_SIZE; col++)
+	{
+		if (col == column)
+			continue;
+		else
+		{
+			Tile tile = board->getTile(row, col);
+			removeValue(tile, value);
+		}
+	}
+
+}
+
+void Solver::cancelColumn(int value, int rowCurrTile, int column)
+{
+	for (int row = 0; row < BOARD_SIZE; row++)
+	{
+		if (row == rowCurrTile)
+			continue;
+		else
+		{
+
+			Tile tile = board->getTile(row, column);
+			removeValue(tile, value);
+		}
+	}
+}
+
+void Solver::cancelBox(int value, int row, int column)
+{
+	int boxRow = row - (row % BOX_SIZE);
+	int boxCol = column - (column % BOX_SIZE);
+
+	for (int curRow = boxRow; curRow < boxRow + BOX_SIZE; curRow++)
+	{
+		for (int curCol = boxCol; curCol < boxCol + BOX_SIZE; curCol++)
+		{
+			if (curCol == column && curRow == row)
+				continue;
+
+			Tile tile = board->getTile(curRow, curCol);
+			removeValue(tile, value);
+
+		}
+	}
+}
+
 bool Solver::performAdvancedSolve() 
 {
 	bool foundSolution = false;
@@ -151,6 +201,7 @@ bool Solver::performAdvancedSolve()
 				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
 				foundSolution = checkRowUnion(row, column) || foundSolution;
 				foundSolution = checkColumnUnion(row, column) || foundSolution;
+				foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
 			}
 		}
 	}
@@ -158,6 +209,38 @@ bool Solver::performAdvancedSolve()
 	return foundSolution;
 }
 
+bool Solver::checkBoxLineReduction(int row, int column)
+{
+	int boxRow = row - (row % BOX_SIZE);
+	int boxCol = column - (column % BOX_SIZE);
+	unordered_set<int> possibleUnion;
+	Tile otherTile,
+		tile = this->board->getTile(row, column);
+	bool foundSolution = false;
+
+	for (int r = boxRow; r < boxRow + BOX_SIZE; r++)
+	{
+		for (int c = boxCol; c < boxCol + BOX_SIZE; c++)
+		{
+			if (c == column && r == row)
+				continue;
+
+			otherTile = this->board->getTile(r, c);
+			int actualTileValue = otherTile.getActualValue();
+
+			if (isOpenTile(actualTileValue))
+			{
+				for (auto possible : otherTile.getPossibleValues())
+					possibleUnion.insert(possible);
+			}
+
+		}
+	}
+
+	foundSolution = checkForValueMissing(possibleUnion, tile);
+
+	return foundSolution;
+}
 
 bool Solver::checkRowUnion(int currRow, int currColumn)
 {
@@ -215,6 +298,124 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 	return foundSolution;
 }
 
+bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
+{
+	bool foundSolution = false;
+	Tile currTile = this->board->getTile(currRow, currColumn);
+	const int inRow = 0, inColumn = 1;
+	for (auto possible : currTile.getPossibleValues())
+	{
+		switch(checkForValueInBox(possible, currRow, currColumn))	
+		{
+			case inRow:
+				cancelRowSkipSameBox(possible, currRow, currColumn);
+				foundSolution = true;
+				break;
+			case inColumn:
+				cancelColumnSkipSameBox(possible, currRow, currColumn);
+				foundSolution = true;
+				break;
+			default:
+				break;
+		}
+	}
+
+	return foundSolution;
+}
+
+void Solver::cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn)
+{
+	int boxCol = currColumn - (currColumn % BOX_SIZE);
+	for (int col = 0; col < BOX_SIZE; col++)
+	{
+		if (isInBoxRow(boxCol, col))
+			continue;
+		
+		Tile tile = board->getTile(currRow, col);
+		removeValue(tile, possibleValue);
+
+	}
+	/*TODO save column of box skip those deletes*/
+}
+void Solver::cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn)
+{
+	int boxRow = currRow - (currRow % BOX_SIZE);
+	for (int row = 0; row < BOX_SIZE; row++)
+	{
+		if (isInBoxCol(boxRow, row))
+			continue;
+
+		Tile tile = board->getTile(row, currColumn);
+		removeValue(tile, possibleValue);
+
+	}
+	/*TODO save row of box skip those deletes*/
+}
+
+bool Solver::isInBoxRow(int boxCol, int currCol)
+{
+	if (currCol == boxCol || currCol == boxCol + 1 || currCol == boxCol + 2)
+		return true;
+
+	return false;
+}
+
+bool Solver::isInBoxCol(int boxRow, int currRow)
+{
+	if (currRow == boxRow || currRow == boxRow + 1 || currRow == boxRow + 2)
+		return true;
+
+	return false;
+}
+/*TODO make this less hacky of a way of doing it for now I just want to test if this logic works*/
+int Solver::checkForValueInBox(int currPossible, int currRow, int currColumn)
+{
+	int inRowFlag = 0;
+	int inColumnFlag = 1;
+	int inBoxFlag = -1;
+
+	int validCancelFlag = -1;
+	int inRowCounter = 0, inColumnCounter = 0;
+	int boxRow = currRow - (currRow % BOX_SIZE);
+	int boxCol = currColumn - (currColumn % BOX_SIZE);
+	Tile otherTile;
+	unordered_set<int> possibleValuesOfOtherTile;
+	int otherTileActualValue;
+
+	for (int row = boxRow; row < boxRow + BOX_SIZE; row++)
+	{
+		for (int col = boxCol; col < boxCol + BOX_SIZE; col++)
+		{
+			otherTile = this->board->getTile(row, col);
+			otherTileActualValue = otherTile.getActualValue();
+			possibleValuesOfOtherTile = otherTile.getPossibleValues();
+
+			if (isOpenTile(otherTileActualValue) && (possibleValuesOfOtherTile.find(currPossible) != possibleValuesOfOtherTile.end()))
+			{
+				if (col == currColumn && row == currRow)
+					continue;
+				if (col == currColumn)
+					inColumnCounter++;
+				else if (row == currRow)
+					inRowCounter++;
+				else
+				{
+					validCancelFlag = inBoxFlag;
+					return validCancelFlag;
+				}
+			}
+		}
+	}
+
+	if ((inRowCounter == 0 && inColumnCounter > 0))
+		validCancelFlag = inColumnFlag;
+	
+	if ((inRowCounter > 0 && inColumnCounter == 0))
+			validCancelFlag = inRowFlag;
+
+	return validCancelFlag;
+}
+
 bool Solver::checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile)
 {
 	for (auto possible : tile.getPossibleValues())
@@ -256,99 +457,6 @@ void Solver::printPossibleValues()
 bool Solver::isOpenTile(int value)
 {
 	return (value == -1);
-}
-
-bool Solver::checkBoxLineReduction(int row, int column) 
-{
-	int boxRow = row - (row % BOX_SIZE);
-	int boxCol = column - (column % BOX_SIZE);
-	unordered_set<int> possibleUnion;
-	Tile otherTile,
-		tile = this->board->getTile(row, column);
-	bool foundSolution = false;
-
-	for (int r = boxRow; r < boxRow + BOX_SIZE ; r++)
-	{
-		for (int c = boxCol; c < boxCol + BOX_SIZE; c++)
-		{
-			if (c == column && r == row)
-				continue;
-
-			otherTile = this->board->getTile(r, c);
-			int actualTileValue = otherTile.getActualValue();
-			
-			if (isOpenTile(actualTileValue)) 
-			{
-				for (auto possible : otherTile.getPossibleValues())
-					possibleUnion.insert(possible);
-			}
-
-		}
-	}
-
-	//for (auto possible : tile.getPossibleValues()) 
-	//{
-	//	if (possibleUnion.find(possible) == possibleUnion.end()) 
-	//	{
-	//		this->board->clearTilePossibleValues(tile.getRow(), tile.getColumn());
-	//		this->board->addTilePossibleValue(possible, tile.getRow(), tile.getColumn());
-	//		this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
-	//		foundSolution = true;
-	//		break;
-	//	}
-	//}
-	foundSolution = checkForValueMissing(possibleUnion, tile);
-	return foundSolution;
-}
-
-void Solver::cancelRow(int value, int row, int column)
-{
-
-	for (int col = 0; col < BOARD_SIZE; col++)
-	{
-		if (col == column)
-			continue;
-		else
-		{
-			Tile tile = board->getTile(row, col);
-			removeValue(tile, value);
-		}
-	}
-
-}
-
-void Solver::cancelColumn(int value, int rowCurrTile, int column)
-{
-	for (int row = 0; row < BOARD_SIZE; row++)
-	{
-		if (row == rowCurrTile)
-			continue;
-		else
-		{
-
-			Tile tile = board->getTile(row, column);
-			removeValue(tile, value);
-		}
-	}
-}
-
-void Solver::cancelBox(int value, int row, int column)
-{
-	int boxRow = row - (row % BOX_SIZE);
-	int boxCol = column - (column % BOX_SIZE);
-
-	for (int curRow = boxRow; curRow < boxRow + BOX_SIZE; curRow++) 
-	{
-		for (int curCol = boxCol; curCol < boxCol + BOX_SIZE; curCol++) 
-		{
-			if (curCol == column && curRow == row)
-				continue;
-			
-			Tile tile = board->getTile(curRow, curCol);
-			removeValue(tile, value);
-			
-		}
-	}
 }
 
 void Solver::removeValue(Tile tile, int value)
