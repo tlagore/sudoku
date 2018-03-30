@@ -94,10 +94,11 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 	}
 }
 
-void Solver::solve()
+bool Solver::solve()
 {
 	generatePossibleValues();
 	int numSolved = 0;
+	bool isSolved = false;
 	
 	while (!this->board->isSolved()) 
 	{
@@ -125,15 +126,16 @@ void Solver::solve()
 		{
 			if (!performAdvancedSolve())
 			{
-				printf("No possible new solutions!\n");
-				getchar();
-				printPossibleValues();
+				//printf("No possible new solutions!\n");
+			//	getchar();
+				//printPossibleValues();
 				break;
 			}
 		}
 	}
-
+	isSolved = this->board->isSolved();
 	cout << "Num solved: " << numSolved << endl;
+	return isSolved;
 }
 
 void Solver::cancelRow(int value, int row, int column)
@@ -160,7 +162,6 @@ void Solver::cancelColumn(int value, int rowCurrTile, int column)
 			continue;
 		else
 		{
-
 			Tile tile = board->getTile(row, column);
 			removeValue(tile, value);
 		}
@@ -298,11 +299,14 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 	return foundSolution;
 }
 
+/*TODO Hacky Reason
+	1.) using a switch statement.  Is this a neccessary case for using a switch statement?
+	Is there a better way of doing this?
+*/
 bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 {
 	bool foundSolution = false;
 	Tile currTile = this->board->getTile(currRow, currColumn);
-	const int inRow = 0, inColumn = 1;
 	for (auto possible : currTile.getPossibleValues())
 	{
 		int rowOrCol = checkForValueInBox(possible, currRow, currColumn);
@@ -329,6 +333,8 @@ bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 /*TODO make this less hacky of a way of doing it for now I just want to test if this logic works
 Hacky being
 1. Using Flags and returning flags
+2. initializing the otherTile, otherTileActualValue and possibleValuesOfOtherTile in the loops.
+	Although I think its hacky it seems neccessary to make it work not sure why.
 */
 int Solver::checkForValueInBox(int currPossible, int currRow, int currColumn)
 {
@@ -348,6 +354,7 @@ int Solver::checkForValueInBox(int currPossible, int currRow, int currColumn)
 			Tile otherTile = this->board->getTile(row, col);
 			int otherTileActualValue = otherTile.getActualValue();
 			unordered_set<int> possibleValuesOfOtherTile = otherTile.getPossibleValues();
+
 			if (isOpenTile(otherTileActualValue))
 			{
 				if (isInPossibleValues(possibleValuesOfOtherTile, currPossible))

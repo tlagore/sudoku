@@ -9,7 +9,7 @@ public:
 	Solver();
 	Solver(Board *board);
 	
-	void solve();
+	bool solve();
 	
 	Board getBoard();
 
