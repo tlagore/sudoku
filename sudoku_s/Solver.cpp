@@ -310,11 +310,13 @@ bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 		{
 			case 0:
 				cancelRowSkipSameBox(possible, currRow, currColumn);
-				foundSolution = true;
+				if(this->singleValueTiles.size() >= 1)
+					foundSolution = true;
 				break;
 			case 1:
 				cancelColumnSkipSameBox(possible, currRow, currColumn);
-				foundSolution = true;
+				if (this->singleValueTiles.size() >= 1)
+					foundSolution = true;
 				break;
 			default:
 				break;
