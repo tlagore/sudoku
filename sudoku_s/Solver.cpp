@@ -111,7 +111,7 @@ void Solver::solve()
 			int value = *tile.getPossibleValues().begin();
 
 			this->board->setTileActualValue(value, row, col);
-
+			
 			numSolved++;
 
 			cancelRow(value, row, col);
@@ -305,13 +305,14 @@ bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 	const int inRow = 0, inColumn = 1;
 	for (auto possible : currTile.getPossibleValues())
 	{
-		switch(checkForValueInBox(possible, currRow, currColumn))	
+		int rowOrCol = checkForValueInBox(possible, currRow, currColumn);
+		switch(rowOrCol)	
 		{
-			case inRow:
+			case 0:
 				cancelRowSkipSameBox(possible, currRow, currColumn);
 				foundSolution = true;
 				break;
-			case inColumn:
+			case 1:
 				cancelColumnSkipSameBox(possible, currRow, currColumn);
 				foundSolution = true;
 				break;
@@ -323,51 +324,10 @@ bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 	return foundSolution;
 }
 
-void Solver::cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn)
-{
-	int boxCol = currColumn - (currColumn % BOX_SIZE);
-	for (int col = 0; col < BOX_SIZE; col++)
-	{
-		if (isInBoxRow(boxCol, col))
-			continue;
-		
-		Tile tile = board->getTile(currRow, col);
-		removeValue(tile, possibleValue);
-
-	}
-	/*TODO save column of box skip those deletes*/
-}
-void Solver::cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn)
-{
-	int boxRow = currRow - (currRow % BOX_SIZE);
-	for (int row = 0; row < BOX_SIZE; row++)
-	{
-		if (isInBoxCol(boxRow, row))
-			continue;
-
-		Tile tile = board->getTile(row, currColumn);
-		removeValue(tile, possibleValue);
-
-	}
-	/*TODO save row of box skip those deletes*/
-}
-
-bool Solver::isInBoxRow(int boxCol, int currCol)
-{
-	if (currCol == boxCol || currCol == boxCol + 1 || currCol == boxCol + 2)
-		return true;
-
-	return false;
-}
-
-bool Solver::isInBoxCol(int boxRow, int currRow)
-{
-	if (currRow == boxRow || currRow == boxRow + 1 || currRow == boxRow + 2)
-		return true;
-
-	return false;
-}
-/*TODO make this less hacky of a way of doing it for now I just want to test if this logic works*/
+/*TODO make this less hacky of a way of doing it for now I just want to test if this logic works
+Hacky being
+1. Using Flags and returning flags
+*/
 int Solver::checkForValueInBox(int currPossible, int currRow, int currColumn)
 {
 	int inRowFlag = 0;
@@ -378,42 +338,77 @@ int Solver::checkForValueInBox(int currPossible, int currRow, int currColumn)
 	int inRowCounter = 0, inColumnCounter = 0;
 	int boxRow = currRow - (currRow % BOX_SIZE);
 	int boxCol = currColumn - (currColumn % BOX_SIZE);
-	Tile otherTile;
-	unordered_set<int> possibleValuesOfOtherTile;
-	int otherTileActualValue;
 
 	for (int row = boxRow; row < boxRow + BOX_SIZE; row++)
 	{
 		for (int col = boxCol; col < boxCol + BOX_SIZE; col++)
 		{
-			otherTile = this->board->getTile(row, col);
-			otherTileActualValue = otherTile.getActualValue();
-			possibleValuesOfOtherTile = otherTile.getPossibleValues();
-
-			if (isOpenTile(otherTileActualValue) && (possibleValuesOfOtherTile.find(currPossible) != possibleValuesOfOtherTile.end()))
+			Tile otherTile = this->board->getTile(row, col);
+			int otherTileActualValue = otherTile.getActualValue();
+			unordered_set<int> possibleValuesOfOtherTile = otherTile.getPossibleValues();
+			if (isOpenTile(otherTileActualValue))
 			{
-				if (col == currColumn && row == currRow)
-					continue;
-				if (col == currColumn)
-					inColumnCounter++;
-				else if (row == currRow)
-					inRowCounter++;
-				else
+				if (isInPossibleValues(possibleValuesOfOtherTile, currPossible))
 				{
-					validCancelFlag = inBoxFlag;
-					return validCancelFlag;
+					if (col == currColumn && row == currRow)
+						continue;
+					if (col == currColumn)
+						inColumnCounter++;
+					else if (row == currRow)
+						inRowCounter++;
+					else
+					{
+						validCancelFlag = inBoxFlag;
+						return validCancelFlag;
+					}
 				}
 			}
 		}
 	}
 
-	if ((inRowCounter == 0 && inColumnCounter > 0))
+	if (inRowCounter == 0 && inColumnCounter > 0)
 		validCancelFlag = inColumnFlag;
-	
-	if ((inRowCounter > 0 && inColumnCounter == 0))
-			validCancelFlag = inRowFlag;
+
+	if (inRowCounter > 0 && inColumnCounter == 0)
+		validCancelFlag = inRowFlag;
 
 	return validCancelFlag;
+}
+
+bool Solver::isInPossibleValues(unordered_set<int> possibleValues, int possible)
+{
+	return (possibleValues.find(possible) != possibleValues.end());
+}
+
+void Solver::cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn)
+{
+	int boxCol = currColumn - (currColumn % BOX_SIZE);
+	for (int col = 0; col < BOARD_SIZE; col++)
+	{
+		if (col >= boxCol && col < boxCol + BOX_SIZE)//isInBoxRow(boxCol, col))
+			continue;
+		else
+		{
+			Tile tile = board->getTile(currRow, col);
+			if(isOpenTile(tile.getActualValue()))
+				removeValue(tile, possibleValue);
+		}
+	}
+}
+
+void Solver::cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn)
+{
+	int boxRow = currRow - (currRow % BOX_SIZE);
+	for (int row = 0; row < BOARD_SIZE; row++)
+	{
+		if (row >= boxRow && row < boxRow + BOX_SIZE)
+			continue;
+		else
+		{
+			Tile tile = board->getTile(row, currColumn);
+			removeValue(tile, possibleValue);
+		}
+	}
 }
 
 bool Solver::checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile)
