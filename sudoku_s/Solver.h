@@ -15,13 +15,15 @@ public:
 
 	void reset(Board *board);
 
-
+	int getNumberSolved();
+	void printPossibleValues();
 	~Solver();
 
 private:
 
 	deque<Tile> singleValueTiles;
 	Board *board;
+	int numSolved = 0;
 	void generatePossibleValues();
 	void generateTileValues(int row, int column);
 	void removeRowValues(int row, int column, unordered_set<int>* possibleValues);
@@ -40,7 +42,6 @@ private:
 	int checkForValueInBox(int currPossible, int currRow, int currColumn);
 	bool isInPossibleValues(unordered_set<int> possibleValues, int possible);
 	bool checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile);
-	void printPossibleValues();
 	bool isOpenTile(int value);
 	bool checkBoxLineReduction(int row, int column);
 };

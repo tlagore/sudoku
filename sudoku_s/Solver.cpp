@@ -97,12 +97,11 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 bool Solver::solve()
 {
 	generatePossibleValues();
-	int numSolved = 0;
+	
 	bool isSolved = false;
-	board->printBoard();
+
 	while (!this->board->isSolved()) 
 	{
-	
 		while (singleValueTiles.size() != 0)
 		{
 
@@ -126,15 +125,13 @@ bool Solver::solve()
 		{
 			if (!performAdvancedSolve())
 			{
-				//printf("No possible new solutions!\n");
-			//	getchar();
 				//printPossibleValues();
 				break;
 			}
 		}
 	}
+
 	isSolved = this->board->isSolved();
-	cout << "Num solved: " << numSolved << endl;
 	return isSolved;
 }
 
@@ -478,9 +475,15 @@ Board Solver::getBoard()
 }
 
 void Solver::reset(Board *board) {
+	this->numSolved = 0;
 	this->singleValueTiles.clear();
 	this->board = NULL;
 	this->board = board;
+}
+
+int Solver::getNumberSolved()
+{
+	return numSolved;
 }
 
 Solver::~Solver()

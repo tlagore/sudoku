@@ -85,7 +85,7 @@ void Interface::solveSpecificBoardMenu()
 void Interface::solveSpecificBoard(int boardNum)
 {
 	bool isSolved = false;
-
+	bool validChoice = false;
 	this->solver.reset(boards[boardNum]);
 	isSolved = this->solver.solve();
 
@@ -93,11 +93,39 @@ void Interface::solveSpecificBoard(int boardNum)
 	{
 		printf("Board Was Solved\n");
 		this->solver.getBoard().printBoard();
+		printf("Number of solved tiles: %d \n",this->solver.getNumberSolved());
 	}
 	else
 	{
 		printf("Failed to solve board\n");
 		this->solver.getBoard().printBoard();
+		printf("Number of solved tiles: %d \n", this->solver.getNumberSolved());
+		
+		char choice;
+		printf("Print remaining possible values? (y or n)\n");
+
+		while (!validChoice)
+		{
+			cin >> choice;
+			cin.clear();
+
+			choice = tolower(choice);
+			switch (choice)
+			{
+			case 'y':
+				//solver.printPossibleValues();
+				printf("Add ability to print possible values here \n");
+				validChoice = true;
+				break;
+			case 'n':
+				printf("See ya ....\n");
+				validChoice = true;
+				break;
+			default:
+				printf("Invalid Choice. Enter y or n \n");
+				break;
+			}
+		}
 	}
 }
 
@@ -110,6 +138,8 @@ void Interface::solveAllBoards()
 	int failedBoards = 0;
 	vector<int> boardsFailed;
 	vector<int> boardsPassed;
+	vector<int> numberSolvedTiles;
+
 	for (int boardNum = 1; boardNum < boards.size(); boardNum++)
 	{
 		if (isSolved)
@@ -119,6 +149,7 @@ void Interface::solveAllBoards()
 		else
 		{
 			boardsFailed.push_back(boardNum);
+			numberSolvedTiles.push_back(solver.getNumberSolved());
 		}
 		solver.reset(boards[boardNum]);
 		isSolved = solver.solve();
@@ -128,8 +159,8 @@ void Interface::solveAllBoards()
 	printf("Boards that Failed: \n");
 	for (int numBoardsFailed = 0; numBoardsFailed < boardsFailed.size(); numBoardsFailed++)
 	{
-
 		printf("Board number: %d \n", boardsFailed[numBoardsFailed]);
+		printf("Number of Solved Tiles: %d", numberSolvedTiles[numBoardsFailed]);
 	}
 
 }
