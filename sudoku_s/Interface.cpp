@@ -140,6 +140,7 @@ void Interface::solveAllBoards()
 	vector<int> boardsPassed;
 	vector<int> numberSolvedTiles;
 
+	printf("Solving.....\n\n");
 	for (int boardNum = 1; boardNum < boards.size(); boardNum++)
 	{
 		if (isSolved)
@@ -155,12 +156,12 @@ void Interface::solveAllBoards()
 		isSolved = solver.solve();
 	}
 
-	printf("Number of Boards failed: %d\n", boardsFailed.size());
-	printf("Boards that Failed: \n");
+	printf("Number of Boards failed: %d\n\n", boardsFailed.size());
+	printf("Boards that Failed: \n\n");
 	for (int numBoardsFailed = 0; numBoardsFailed < boardsFailed.size(); numBoardsFailed++)
 	{
 		printf("Board number: %d \n", boardsFailed[numBoardsFailed]);
-		printf("Number of Solved Tiles: %d", numberSolvedTiles[numBoardsFailed]);
+		printf("Number of Solved Tiles: %d \n\n", numberSolvedTiles[numBoardsFailed]);
 	}
 
 }
