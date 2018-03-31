@@ -99,10 +99,10 @@ bool Solver::solve()
 	generatePossibleValues();
 	int numSolved = 0;
 	bool isSolved = false;
-	
+	board->printBoard();
 	while (!this->board->isSolved()) 
 	{
-
+	
 		while (singleValueTiles.size() != 0)
 		{
 

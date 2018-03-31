@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Board.h" />
+    <ClInclude Include="Interface.h" />
     <ClInclude Include="PuzzleIO.h" />
     <ClInclude Include="Solver.h" />
     <ClInclude Include="stdafx.h" />
@@ -156,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
+    <ClCompile Include="Interface.cpp" />
     <ClCompile Include="PuzzleIO.cpp" />
     <ClCompile Include="Solver.cpp" />
     <ClCompile Include="stdafx.cpp">
