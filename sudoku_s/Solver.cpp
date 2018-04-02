@@ -12,6 +12,9 @@ Solver::Solver(Board *board)
 	this->board = board;
 }
 
+/*
+	generatePossibleValues loops through the entire puzzle, generating all possible values for each tile
+*/
 void Solver::generatePossibleValues()
 {
 	for (int row = 0; row < BOARD_SIZE; row++)
@@ -27,6 +30,12 @@ void Solver::generatePossibleValues()
 	}
 }
 
+/*
+	generateTileValues takes in a specific row and column and generates the possible values for this Tile.
+
+	It does so by assuming that the tile has all possible values (1-9 for a 9x9 sudoku) and then iteratively 
+	removes possible values by checking the other values in the tiles respective row, column, and box
+*/
 void Solver::generateTileValues(int row, int column)
 {
 	unordered_set<int> possibleValues = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -37,6 +46,7 @@ void Solver::generateTileValues(int row, int column)
 
 	board->setTilePossibleValues(row, column, possibleValues);
 
+	//if the possibleValues for this tile has only 1 value, it is the solution to the tile - add it to the singleValueTiles vector
 	if (possibleValues.size() == 1)
 	{
 		Tile tile = this->board->getTile(row, column);
@@ -45,11 +55,16 @@ void Solver::generateTileValues(int row, int column)
 
 }
 
+/*
+	Removes row values as possible solutions to a tile by iterating through each column for the row, skipping its own Tile,
+	If a value is encountered is in the supplied possibleValue unordered_set, then it is removed as a possible value
+*/
 void Solver::removeRowValues(int row, int column, unordered_set<int>*possibleValues)
 {
 	int curValue;
 
 	for (int c = 0; c < BOARD_SIZE; c++) {
+		//skip the tile that we are checking values for
 		if (column == c)
 			continue;
 
@@ -60,11 +75,16 @@ void Solver::removeRowValues(int row, int column, unordered_set<int>*possibleVal
 	}
 }
 
+/*
+	Removes column values as possible solutions to a tile by iterating through each row for the row, skipping its own Tile,
+	If a value is encountered is in the supplied possibleValue unordered_set, then it is removed as a possible value
+*/
 void Solver::removeColValues(int row, int column, unordered_set<int>* possibleValues)
 {
 	int curValue;
 
 	for (int r = 0; r < BOARD_SIZE; r++) {
+		//skip th e tile that we are checking vlaues for
 		if (row == r)
 			continue;
 
@@ -75,14 +95,21 @@ void Solver::removeColValues(int row, int column, unordered_set<int>* possibleVa
 	}
 }
 
+/*
+	Removes box values as possible solutions to a tile by iterating through the box that the tile belongs to,
+	If a value is encountered is in the supplied possibleValue unordered_set, then it is removed as a possible value
+*/
 void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleValues)
 {
+	//find what the row/column is the start of the box
 	int boxRow = row - (row % BOX_SIZE);
 	int boxCol = column - (column % BOX_SIZE);
 	int tileValue;
 
+	//loop from box start row/column to the end of the box row/column
 	for (int curRow = boxRow; curRow < boxRow + BOX_SIZE; curRow++) {
 		for (int curCol = boxCol; curCol < boxCol + BOX_SIZE; curCol++) {
+			//skip the Tile we are checking for
 			if (curCol == column && curRow == row)
 				continue;
 
@@ -94,6 +121,17 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 	}
 }
 
+/*
+	solve() runs a series of checks to attempt to solve the board.
+
+	First the singleValueTiles vector is checked to see if there are any tiles that have only one possible solution.
+	Each Tile in the singleValueTiles vector has its value set to its only possible value, and then that value is removed
+	from other Tile values in the same row/column/box as the Tile that was set.
+
+	When the singleValueTiles set is exhausted, a check is performed to see if the board is solved
+	If the board is not solved, more advanced checks are performed to see if further cancellations can be made.
+
+*/
 bool Solver::solve()
 {
 	generatePossibleValues();
@@ -123,6 +161,7 @@ bool Solver::solve()
 
 		if (!this->board->isSolved()) 
 		{
+			//if performAdvancedSolve doesn't find a new Tile value then our sudoku solver can't handle this puzzle, exit solve loop
 			if (!performAdvancedSolve())
 			{
 				//printPossibleValues();
@@ -135,6 +174,9 @@ bool Solver::solve()
 	return isSolved;
 }
 
+/*
+	cancelRow takes in a value and cancels that value as a possible value from all Tiles in the supplied row
+*/
 void Solver::cancelRow(int value, int row, int column)
 {
 
@@ -151,6 +193,9 @@ void Solver::cancelRow(int value, int row, int column)
 
 }
 
+/*
+	cancelColumn takes in a value and cancels that value as a possible value from all Tiles in the supplied column
+*/
 void Solver::cancelColumn(int value, int rowCurrTile, int column)
 {
 	for (int row = 0; row < BOARD_SIZE; row++)
@@ -165,6 +210,9 @@ void Solver::cancelColumn(int value, int rowCurrTile, int column)
 	}
 }
 
+/*
+	cancelBox takes in a value and cancels that value as a possible value from all Tiles in the box to which the Tile belongs
+*/
 void Solver::cancelBox(int value, int row, int column)
 {
 	int boxRow = row - (row % BOX_SIZE);
@@ -184,6 +232,25 @@ void Solver::cancelBox(int value, int row, int column)
 	}
 }
 
+/*
+	performAdvancedSolve performs a series of checks that go above simple cross-hatching (eliminating possible values by checking 
+	the values of interesecting rows/columns and values within the box itself) to generate new solutions for the puzzle.
+
+	These methods are:
+		- Box line reduction
+			- A form of intersection removal in which candidates which must belong to 
+			  a line can be ruled out as candidates in a block (or box) that intersects the line in question.
+
+		- row union / column union / box union
+			- This checks if any particular possible value in a Tile is the not found in the union of the possible
+			  values of the other tiles corresponding to that tiles row, column, or box. This indicates that it is the 
+			  only possible Tile for the value for that row/column/box
+
+		- check unsolved cancel
+			- in progress..
+			- Checks to see if a cancellation can be made by seeing that a possible value appears in only one row or column in a specific box, 
+			  therefore the value can be removed as a possible value from all other boxes in the specified row or column
+*/
 bool Solver::performAdvancedSolve() 
 {
 	bool foundSolution = false;
@@ -294,6 +361,37 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 	foundSolution = checkForValueMissing(possibleRowUnionValues, tile);
 
 	return foundSolution;
+}
+
+
+/*
+	Attempt #2 at checkUnsolvedCancel
+
+	
+	AND YEAH I USED 1 R IN CUR. GIT SUM.	
+*/
+
+bool Solver::checkUnsolvedCancel2(int curRow, int curCol)
+{
+	bool foundSolution = false;
+	return false;
+}
+
+// This funciton probably only needs to be 
+bool Solver::checkUnsolvedCancelRow(int curRow, int curCol) 
+{
+	bool foundSolution = false;
+}
+
+bool Solver::checkUnsolvedCancelCol(int curRow, int curCol)
+{
+
+}
+
+// Might not need to be done for every tile, just for each box
+bool Solver::checkUnsolvedCancelBox(int curRow, int curCol) 
+{
+
 }
 
 /*TODO Hacky Reason
