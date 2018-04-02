@@ -241,10 +241,11 @@ void Solver::cancelBox(int value, int row, int column)
 			- A form of intersection removal in which candidates which must belong to 
 			  a line can be ruled out as candidates in a block (or box) that intersects the line in question.
 
-		- row union / column union / box union
+		- row union / column union
 			- This checks if any particular possible value in a Tile is the not found in the union of the possible
-			  values of the other tiles corresponding to that tiles row, column, or box. This indicates that it is the 
-			  only possible Tile for the value for that row/column/box
+			  values of the other tiles corresponding to that tiles row or column. This indicates that it is the 
+			  only possible Tile for the value for that row/column
+			- Same as box line reduction except for column & row
 
 		- check unsolved cancel
 			- in progress..
@@ -274,6 +275,10 @@ bool Solver::performAdvancedSolve()
 	return foundSolution;
 }
 
+/*
+	- A form of intersection removal in which candidates which must belong to
+	a line can be ruled out as candidates in a block (or box) that intersects the line in question.
+*/
 bool Solver::checkBoxLineReduction(int row, int column)
 {
 	int boxRow = row - (row % BOX_SIZE);
@@ -367,6 +372,11 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 /*
 	Attempt #2 at checkUnsolvedCancel
 
+	Idea:
+		- Create a mapping of row: all possible values for a particular box.
+		- check each value in each mapping to see if appears in the other row possible values.
+		- if the value does not belong to the other mappings, it *must* be found in this row of this box 
+		- cancel the particular value from all other tiles in same row the other boxes
 	
 	AND YEAH I USED 1 R IN CUR. GIT SUM.	
 */
@@ -374,13 +384,56 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 bool Solver::checkUnsolvedCancel2(int curRow, int curCol)
 {
 	bool foundSolution = false;
+
+	checkUnsolvedCancelRow(curRow, curCol);
+
 	return false;
 }
 
 // This funciton probably only needs to be 
 bool Solver::checkUnsolvedCancelRow(int curRow, int curCol) 
 {
+	unordered_set<int> rowPossibles[BOX_SIZE];
+		//find start of box row
+	int boxRow = curRow - (curRow % BOX_SIZE);
+	//find start of box column
+	int boxCol = curCol - (curCol % BOX_SIZE);
+
+	for (int curBoxRow = boxRow; curBoxRow < boxRow + BOX_SIZE; curBoxRow++)
+	{
+		for (int curColRow = 0; curColRow < curCol + BOX_SIZE; curColRow++)
+		{
+			// for each possible value in this tile add it to the corresponding row's set of possible values
+			for (auto possible : this->board->getTile(curBoxRow, curColRow).getPossibleValues())
+			{
+				rowPossibles[curBoxRow].insert(possible);
+			}
+		}
+	}
+
+	//check if any value in a row possible is not found in the other rows
+	for (int curSet = 0; curSet < BOX_SIZE; curSet++)
+	{
+		for (int otherSet = 0; otherSet < BOX_SIZE; otherSet++) 
+		{
+			//dont check against ourselves
+			if (otherSet != curSet) {
+				for (auto possible : rowPossibles[curSet]) {
+					if (!setContains(rowPossibles[otherSet], possible))
+					{
+						//TODO: handle that the set does not contain a value
+					}
+				}
+			}
+		}
+	}
+
 	bool foundSolution = false;
+}
+
+bool Solver::setContains(unordered_set<int> set, int value) 
+{
+	return (set.find(value) != set.end());
 }
 
 bool Solver::checkUnsolvedCancelCol(int curRow, int curCol)

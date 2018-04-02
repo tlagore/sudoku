@@ -36,6 +36,10 @@ private:
 	bool performAdvancedSolve();
 	bool checkRowUnion(int row, int column);
 	bool checkColumnUnion(int row, int column);
+	bool checkUnsolvedCancel2(int curRow, int curCol);
+	bool checkUnsolvedCancelRow(int curRow, int curCol);
+	bool checkUnsolvedCancelCol(int curRow, int curCol);
+	bool checkUnsolvedCancelBox(int curRow, int curCol);
 	bool checkUnsolvedCancel(int currRow, int currColumn);
 	void cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn);
 	void cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn);
