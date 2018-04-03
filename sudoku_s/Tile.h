@@ -31,6 +31,7 @@ public:
 	int getActualValue();
 
 	void setActualValue(int value);
+	void printPossibleValues();
 
 private:
 	int actualValue;

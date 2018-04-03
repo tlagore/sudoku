@@ -85,3 +85,11 @@ void Tile::setActualValue(int value)
 		this->possibleValues.clear();
 	}
 }
+
+void Tile::printPossibleValues()
+{
+	for (auto possible : possibleValues)
+	{
+		printf("%d ", possible);
+	}
+}

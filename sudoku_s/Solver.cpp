@@ -269,13 +269,13 @@ bool Solver::performAdvancedSolve()
 				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
 				foundSolution = checkRowUnion(row, column) || foundSolution;
 				foundSolution = checkColumnUnion(row, column) || foundSolution;
-				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
+				foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
 
 				//only needs to be checked once per box
 				//if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
 				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
 				
-				foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
+				//foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
 			}
 		}
 	}
@@ -497,14 +497,10 @@ bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 		switch(rowOrCol)	
 		{
 			case 0:
-				cancelRowSkipSameBox(possible, currRow, currColumn);
-				if(this->singleValueTiles.size() >= 1)
-					foundSolution = true;
+				foundSolution = cancelRowSkipSameBox(possible, currRow, currColumn) || foundSolution;
 				break;
 			case 1:
-				cancelColumnSkipSameBox(possible, currRow, currColumn);
-				if (this->singleValueTiles.size() >= 1)
-					foundSolution = true;
+				foundSolution = cancelColumnSkipSameBox(possible, currRow, currColumn) || foundSolution;
 				break;
 			default:
 				break;
@@ -640,11 +636,8 @@ void Solver::printPossibleValues()
 			if (isOpenTile(actualTileValue))
 			{
 				printf("Tile(row %d, col %d): ", row, col);
-				unordered_set<int> possibleValuesOfTile = tile.getPossibleValues();
-				for (auto possible : possibleValuesOfTile)
-				{
-					printf("%d ", possible);
-				}
+				tile.printPossibleValues();
+
 				printf("\n");
 			}
 		}
