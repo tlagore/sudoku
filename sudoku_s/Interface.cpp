@@ -86,6 +86,7 @@ void Interface::solveSpecificBoard(int boardNum)
 {
 	bool isSolved = false;
 	bool validChoice = false;
+	boards[boardNum]->printBoard();
 	this->solver.reset(boards[boardNum]);
 	isSolved = this->solver.solve();
 

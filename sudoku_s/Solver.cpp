@@ -266,13 +266,13 @@ bool Solver::performAdvancedSolve()
 				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
 				foundSolution = checkRowUnion(row, column) || foundSolution;
 				foundSolution = checkColumnUnion(row, column) || foundSolution;
-				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
+				foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
 
 				//only needs to be checked once per box
 				//if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
 				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
 				
-				foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
+				//foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
 			}
 		}
 	}
@@ -507,7 +507,6 @@ bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 				break;
 		}
 	}
-
 	return foundSolution;
 }
 

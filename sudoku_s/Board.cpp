@@ -99,7 +99,7 @@ bool Board::isValidState()
 				return false;
 		}
 	}
-	
+	return true;
 }
 
 bool Board::isValidRow(Tile tile)
