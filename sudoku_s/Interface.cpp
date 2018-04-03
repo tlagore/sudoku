@@ -42,11 +42,11 @@ bool Interface::mainMenu()
 	{
 		case 1: 
 			solveSpecificBoardMenu();
-			isOpen = false;
+			isOpen = true;
 			break;
 		case 2:
 			solveAllBoards();
-			isOpen = false;
+			isOpen = true;
 			break;
 		case 3:
 			isOpen = false;
@@ -114,7 +114,7 @@ void Interface::solveSpecificBoard(int boardNum)
 			switch (choice)
 			{
 			case 'y':
-				this->solver.getBoard()->printPossibleValues();
+				solver.getBoard()->printPossibleValues();
 				printf("Add ability to print possible values here \n");
 				validChoice = true;
 				break;
