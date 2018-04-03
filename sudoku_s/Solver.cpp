@@ -8,6 +8,7 @@ Solver::Solver()
 Solver::Solver(Board *board)
 {
 	this->board = board;
+	this->numSolved = 0;
 }
 
 /*
@@ -259,20 +260,22 @@ bool Solver::performAdvancedSolve()
 	{
 		for (int column = 0; column < BOARD_SIZE; column++)
 		{
-			int tileValue = this->board->getTile(row, column).getActualValue();
+			Tile tile = this->board->getTile(row, column);
+			int tileValue = tile.getActualValue();
+			int possibleSize = tile.getPossibleValues().size();
 		
-			if (isOpenTile(tileValue)) 
+			if (isOpenTile(tileValue) && possibleSize > 1)
 			{
 				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
 				foundSolution = checkRowUnion(row, column) || foundSolution;
 				foundSolution = checkColumnUnion(row, column) || foundSolution;
-				foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
+				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
 
 				//only needs to be checked once per box
 				//if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
 				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
 				
-				//foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
+				foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
 			}
 		}
 	}
@@ -610,14 +613,16 @@ bool Solver::cancelColumnSkipSameBox(int possibleValue, int currRow, int currCol
 
 bool Solver::checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile)
 {
-	for (auto possible : tile.getPossibleValues())
-	{
-		if (possibleUnionValues.find(possible) == possibleUnionValues.end())
+	if (tile.getPossibleValues().size() > 1) {
+		for (auto possible : tile.getPossibleValues())
 		{
-			this->board->clearTilePossibleValues(tile.getRow(), tile.getColumn());
-			this->board->addTilePossibleValue(possible, tile.getRow(), tile.getColumn());
-			this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
-			return true;	
+			if (possibleUnionValues.find(possible) == possibleUnionValues.end())
+			{
+				this->board->clearTilePossibleValues(tile.getRow(), tile.getColumn());
+				this->board->addTilePossibleValue(possible, tile.getRow(), tile.getColumn());
+				this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
+				return true;
+			}
 		}
 	}
 	return false;
@@ -654,7 +659,7 @@ bool Solver::isOpenTile(int value)
 bool Solver::removeValue(Tile tile, int value)
 {
 	bool removedValue = false;
-	if (tile.getPossibleValues().size() > 1)
+	if (board->getTile(tile.getRow(), tile.getColumn()).getPossibleValues().size() > 1)
 	{
 		removedValue = board->removePossibleValue(value, tile.getRow(), tile.getColumn());
 		if (board->getTile(tile.getRow(), tile.getColumn()).getPossibleValues().size() == 1)
