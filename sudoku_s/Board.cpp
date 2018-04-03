@@ -163,9 +163,9 @@ bool Board::isValidBox(Tile tile)
 
 	return true;
 }
-void Board::removePossibleValue(int value, int row, int column)
+bool Board::removePossibleValue(int value, int row, int column)
 {
-	this->board[row][column]->removePossibleValue(value);
+	return this->board[row][column]->removePossibleValue(value);
 }
 bool Board::isSolved()
 {

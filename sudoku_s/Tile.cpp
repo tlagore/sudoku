@@ -35,9 +35,19 @@ void Tile::addPossibleValue(int value)
 	this->possibleValues.insert(value);
 }
 
-void Tile::removePossibleValue(int value)
+
+/*
+	attempts to remove a possible value from the tiles possibleValue list. If the value is present and is removed, true is returned, else false
+*/
+bool Tile::removePossibleValue(int value)
 {
-	this->possibleValues.erase(value);
+	if (this->possibleValues.find(value) != this->possibleValues.end())
+	{
+		this->possibleValues.erase(value);
+		return true;
+	}
+
+	return false;
 }
 
 void Tile::clearPossibleValues()

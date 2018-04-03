@@ -1,7 +1,5 @@
 #include "stdafx.h"
 #include "Solver.h"
-#include <unordered_set>
-
 
 Solver::Solver()
 {
@@ -174,6 +172,7 @@ bool Solver::solve()
 	return isSolved;
 }
 
+
 /*
 	cancelRow takes in a value and cancels that value as a possible value from all Tiles in the supplied row
 */
@@ -267,7 +266,13 @@ bool Solver::performAdvancedSolve()
 				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
 				foundSolution = checkRowUnion(row, column) || foundSolution;
 				foundSolution = checkColumnUnion(row, column) || foundSolution;
-				foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
+				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
+
+				//only needs to be checked once per box
+				//if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
+				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
+				
+				foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
 			}
 		}
 	}
@@ -385,66 +390,94 @@ bool Solver::checkUnsolvedCancel2(int curRow, int curCol)
 {
 	bool foundSolution = false;
 
-	checkUnsolvedCancelRow(curRow, curCol);
-
-	return false;
-}
-
-// This funciton probably only needs to be 
-bool Solver::checkUnsolvedCancelRow(int curRow, int curCol) 
-{
-	unordered_set<int> rowPossibles[BOX_SIZE];
-		//find start of box row
+	unordered_map<int, unordered_set<int>> rowPossibles;
+	unordered_map<int, unordered_set<int>> colPossibles;
+	//find start of box row
 	int boxRow = curRow - (curRow % BOX_SIZE);
 	//find start of box column
 	int boxCol = curCol - (curCol % BOX_SIZE);
+	bool performedCancellation = false;
+
 
 	for (int curBoxRow = boxRow; curBoxRow < boxRow + BOX_SIZE; curBoxRow++)
 	{
-		for (int curColRow = 0; curColRow < curCol + BOX_SIZE; curColRow++)
+		for (int curBoxCol = boxCol; curBoxCol < boxCol + BOX_SIZE; curBoxCol++)
 		{
-			// for each possible value in this tile add it to the corresponding row's set of possible values
-			for (auto possible : this->board->getTile(curBoxRow, curColRow).getPossibleValues())
+			// for each possible value in this tile add it to the corresponding row/column set of possible values
+			for (auto possible : this->board->getTile(curBoxRow, curBoxCol).getPossibleValues())
 			{
 				rowPossibles[curBoxRow].insert(possible);
+				colPossibles[curBoxCol].insert(possible);
 			}
 		}
 	}
 
+	//check to see if the rows of the box or the columns of a box have a unique value in a particular column or row
+	//and set cancellation flag based on this
+	performedCancellation = checkSetsContainsUnique(rowPossibles, curRow, curCol, "row")
+		|| checkSetsContainsUnique(colPossibles, curRow, curCol, "column");
+
+	return performedCancellation;
+}
+
+
+/*
+	This is only a little hacky because, in an attempt to reduce duplicated code, the function takes in a string indicating
+	whether or not it is checking sets of rows or sets of columns, then uses this string to perform the appropriate cancellation.
+
+	It would be better if checkSetsContainUnique was unaware of the column/row concept but can't think of a way to handle this without
+	duplicating code or a flag.
+*/
+bool Solver::checkSetsContainsUnique(unordered_map<int, unordered_set<int>> sets, int curRow, int curCol, string type) {
+
+	bool performedCancellation = false;
 	//check if any value in a row possible is not found in the other rows
-	for (int curSet = 0; curSet < BOX_SIZE; curSet++)
+
+	vector <unordered_set<int>> vOtherSets;
+
+	//for each set
+	for (auto keyValue : sets)
 	{
-		for (int otherSet = 0; otherSet < BOX_SIZE; otherSet++) 
+		//generate a list of the other sets
+		for (auto otherSets : sets)
 		{
-			//dont check against ourselves
-			if (otherSet != curSet) {
-				for (auto possible : rowPossibles[curSet]) {
-					if (!setContains(rowPossibles[otherSet], possible))
-					{
-						//TODO: handle that the set does not contain a value
-					}
+			if (otherSets.first == keyValue.first)
+				continue;
+
+			vOtherSets.push_back(otherSets.second);
+		}
+
+		//for each possible value in our test set
+		for (auto possible : keyValue.second)
+		{
+			bool notInOtherSets = true;
+			for (auto set : vOtherSets) {
+				notInOtherSets = !setContains(set, possible) && notInOtherSets;
+
+				//if in any of the sets, notInOtherSets = false
+				if (!notInOtherSets)
+					break;
+			}
+			if (notInOtherSets)
+			{
+				if (type == "row")
+					performedCancellation = cancelRowSkipSameBox(possible, keyValue.first, curCol) || performedCancellation;
+				else if (type == "column") {
+					performedCancellation = cancelColumnSkipSameBox(possible, curRow, keyValue.first) || performedCancellation;
 				}
 			}
 		}
+		vOtherSets.clear();
 	}
-
-	bool foundSolution = false;
+	return performedCancellation;
 }
 
+/*
+	simple wrapper to clarify the logic behind checking if a value exists in an unordered_set
+*/
 bool Solver::setContains(unordered_set<int> set, int value) 
 {
 	return (set.find(value) != set.end());
-}
-
-bool Solver::checkUnsolvedCancelCol(int curRow, int curCol)
-{
-
-}
-
-// Might not need to be done for every tile, just for each box
-bool Solver::checkUnsolvedCancelBox(int curRow, int curCol) 
-{
-
 }
 
 /*TODO Hacky Reason
@@ -537,9 +570,11 @@ bool Solver::isInPossibleValues(unordered_set<int> possibleValues, int possible)
 	return (possibleValues.find(possible) != possibleValues.end());
 }
 
-void Solver::cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn)
+bool Solver::cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn)
 {
 	int boxCol = currColumn - (currColumn % BOX_SIZE);
+	bool removedValue = false;
+
 	for (int col = 0; col < BOARD_SIZE; col++)
 	{
 		if (col >= boxCol && col < boxCol + BOX_SIZE)//isInBoxRow(boxCol, col))
@@ -548,14 +583,18 @@ void Solver::cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn
 		{
 			Tile tile = board->getTile(currRow, col);
 			if(isOpenTile(tile.getActualValue()))
-				removeValue(tile, possibleValue);
+				removedValue = removeValue(tile, possibleValue) || removedValue;
 		}
 	}
+
+	return removedValue;
 }
 
-void Solver::cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn)
+bool Solver::cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn)
 {
 	int boxRow = currRow - (currRow % BOX_SIZE);
+	bool removedValue = false;
+
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
 		if (row >= boxRow && row < boxRow + BOX_SIZE)
@@ -563,9 +602,11 @@ void Solver::cancelColumnSkipSameBox(int possibleValue, int currRow, int currCol
 		else
 		{
 			Tile tile = board->getTile(row, currColumn);
-			removeValue(tile, possibleValue);
+			removedValue =  removeValue(tile, possibleValue) || removedValue;
 		}
 	}
+
+	return removedValue;
 }
 
 bool Solver::checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile)
@@ -611,25 +652,29 @@ bool Solver::isOpenTile(int value)
 	return (value == -1);
 }
 
-void Solver::removeValue(Tile tile, int value)
+bool Solver::removeValue(Tile tile, int value)
 {
+	bool removedValue = false;
 	if (tile.getPossibleValues().size() > 1)
 	{
-		board->removePossibleValue(value, tile.getRow(), tile.getColumn());
+		removedValue = board->removePossibleValue(value, tile.getRow(), tile.getColumn());
 		if (board->getTile(tile.getRow(), tile.getColumn()).getPossibleValues().size() == 1)
 			singleValueTiles.push_back(board->getTile(tile.getRow(), tile.getColumn()));
 	}
+
+	return removedValue;
 }
 Board Solver::getBoard()
 {
 	return *board;
 }
 
-void Solver::reset(Board *board) {
+void Solver::reset(Board *otherBoard) {
 	this->numSolved = 0;
 	this->singleValueTiles.clear();
+	//delete this->board;
 	this->board = NULL;
-	this->board = board;
+	this->board = otherBoard;
 }
 
 int Solver::getNumberSolved()

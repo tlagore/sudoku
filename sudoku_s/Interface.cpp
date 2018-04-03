@@ -5,7 +5,7 @@
 Interface::Interface()
 {
 	this->boards = pio.readFromFile("..\\sudoku.txt");
-	this->solver = Solver(boards[0]);
+	//this->solver = Solver(boards[0]);
 }
 
 Interface::Interface(string fromFile)
@@ -131,9 +131,9 @@ void Interface::solveSpecificBoard(int boardNum)
 
 void Interface::solveAllBoards()
 {
-
 	bool isSolved = false;
-	this->solver.reset(boards[0]);
+	//this->solver.reset(boards[0]);
+	this->solver = Solver(boards[0]);
 	isSolved = solver.solve();
 	int failedBoards = 0;
 	vector<int> boardsFailed;
@@ -153,7 +153,9 @@ void Interface::solveAllBoards()
 			numberSolvedTiles.push_back(solver.getNumberSolved());
 		}
 		solver.reset(boards[boardNum]);
+		printf("Solving board... %d\n", boardNum);
 		isSolved = solver.solve();
+
 	}
 
 	printf("Number of Boards failed: %d\n\n", boardsFailed.size());

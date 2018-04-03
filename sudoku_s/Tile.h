@@ -18,7 +18,7 @@ public:
 
 
 	void addPossibleValue(int value);
-	void removePossibleValue(int value);
+	bool removePossibleValue(int value);
 	void clearPossibleValues();
 
 	int getColumn();

@@ -23,7 +23,7 @@ public:
 	bool isValidRow(Tile tile);
 	bool isValidColumn(Tile tile);
 	bool isValidBox(Tile tile);
-	void removePossibleValue(int value, int row, int column);
+	bool removePossibleValue(int value, int row, int column);
 	bool isSolved();
 	void printBoard();
 

@@ -2,6 +2,10 @@
 
 #include "Board.h"
 #include <deque>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector> 
+
 class Solver
 {
 public:
@@ -32,17 +36,21 @@ private:
 	void cancelBox(int value, int row, int column);
 	void cancelRow(int value, int row, int column);
 	void cancelColumn(int value, int row, int column);
-	void removeValue(Tile tile, int value);
+	bool removeValue(Tile tile, int value);
 	bool performAdvancedSolve();
 	bool checkRowUnion(int row, int column);
 	bool checkColumnUnion(int row, int column);
+
+	///Tyrone attempt at unsolved cancel functions
+	///Note: These functions call cancelRowSkipSameBox and cancelColumnSkipSameBox
 	bool checkUnsolvedCancel2(int curRow, int curCol);
-	bool checkUnsolvedCancelRow(int curRow, int curCol);
-	bool checkUnsolvedCancelCol(int curRow, int curCol);
-	bool checkUnsolvedCancelBox(int curRow, int curCol);
+	bool checkSetsContainsUnique(unordered_map<int, unordered_set<int>> sets, int curRow, int curCol, string type);
+	bool setContains(unordered_set<int>, int value);
+	///
+
 	bool checkUnsolvedCancel(int currRow, int currColumn);
-	void cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn);
-	void cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn);
+	bool cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn);
+	bool cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn);
 	int checkForValueInBox(int currPossible, int currRow, int currColumn);
 	bool isInPossibleValues(unordered_set<int> possibleValues, int possible);
 	bool checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile);
