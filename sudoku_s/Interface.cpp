@@ -93,13 +93,13 @@ void Interface::solveSpecificBoard(int boardNum)
 	if (isSolved)
 	{
 		printf("Board Was Solved\n");
-		this->solver.getBoard().printBoard();
+		this->solver.getBoard()->printBoard();
 		printf("Number of solved tiles: %d \n",this->solver.getNumberSolved());
 	}
 	else
 	{
 		printf("Failed to solve board\n");
-		this->solver.getBoard().printBoard();
+		this->solver.getBoard()->printBoard();
 		printf("Number of solved tiles: %d \n", this->solver.getNumberSolved());
 		
 		char choice;
@@ -114,7 +114,7 @@ void Interface::solveSpecificBoard(int boardNum)
 			switch (choice)
 			{
 			case 'y':
-				//solver.printPossibleValues();
+				this->solver.getBoard()->printPossibleValues();
 				printf("Add ability to print possible values here \n");
 				validChoice = true;
 				break;

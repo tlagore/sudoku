@@ -15,12 +15,11 @@ public:
 	
 	bool solve();
 	
-	Board getBoard();
+	Board* getBoard();
 
 	void reset(Board *board);
 
 	int getNumberSolved();
-	void printPossibleValues();
 	~Solver();
 
 private:
@@ -44,7 +43,7 @@ private:
 	///Tyrone attempt at unsolved cancel functions
 	///Note: These functions call cancelRowSkipSameBox and cancelColumnSkipSameBox
 	bool checkUnsolvedCancel2(int curRow, int curCol);
-	bool checkSetsContainsUnique(unordered_map<int, unordered_set<int>> sets, int curRow, int curCol, string type);
+	bool checkSetsContainsUnique(const unordered_map<int, unordered_set<int>> *pSets, int curRow, int curCol, string type);
 	bool setContains(unordered_set<int>, int value);
 	///
 
