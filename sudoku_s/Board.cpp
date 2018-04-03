@@ -163,6 +163,30 @@ bool Board::isValidBox(Tile tile)
 
 	return true;
 }
+
+void Board::printPossibleValues()
+{
+	for (int row = 0; row < BOARD_SIZE; row++)
+	{
+		for (int col = 0; col < BOARD_SIZE; col++)
+		{
+			Tile *tile = this->board[row][col];
+			int actualTileValue = tile->getActualValue();
+
+			if (actualTileValue == -1)
+			{
+				printf("Tile(row %d, col %d): ", row, col);
+				unordered_set<int> possibleValuesOfTile = tile->getPossibleValues();
+				for (auto possible : possibleValuesOfTile)
+				{
+					printf("%d ", possible);
+				}
+				printf("\n");
+			}
+		}
+	}
+}
+
 bool Board::removePossibleValue(int value, int row, int column)
 {
 	return this->board[row][column]->removePossibleValue(value);

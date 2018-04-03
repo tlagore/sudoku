@@ -266,16 +266,21 @@ bool Solver::performAdvancedSolve()
 		
 			if (isOpenTile(tileValue) && possibleSize > 1)
 			{
-				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
-				foundSolution = checkRowUnion(row, column) || foundSolution;
-				foundSolution = checkColumnUnion(row, column) || foundSolution;
+				if (this->singleValueTiles.size() == 0)
+					foundSolution = checkBoxLineReduction(row, column) || foundSolution;
+
+				if (this->singleValueTiles.size() == 0)
+					foundSolution = checkRowUnion(row, column) || foundSolution;
+
+				if (this->singleValueTiles.size() == 0)
+					foundSolution = checkColumnUnion(row, column) || foundSolution;
 				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
 
-				//only needs to be checked once per box
-				//if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
-				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
+				//ideally this should only need to be checked once per box - but for some reason it is having trouble with that
+				if (this->singleValueTiles.size() == 0)
+					foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
 				
-				foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
+				
 			}
 		}
 	}
@@ -417,8 +422,8 @@ bool Solver::checkUnsolvedCancel2(int curRow, int curCol)
 
 	//check to see if the rows of the box or the columns of a box have a unique value in a particular column or row
 	//and set cancellation flag based on this
-	performedCancellation = checkSetsContainsUnique(rowPossibles, curRow, curCol, "row")
-		|| checkSetsContainsUnique(colPossibles, curRow, curCol, "column");
+	performedCancellation = checkSetsContainsUnique(&rowPossibles, curRow, curCol, "row")
+		|| checkSetsContainsUnique(&colPossibles, curRow, curCol, "column");
 
 	return performedCancellation;
 }
@@ -431,12 +436,13 @@ bool Solver::checkUnsolvedCancel2(int curRow, int curCol)
 	It would be better if checkSetsContainUnique was unaware of the column/row concept but can't think of a way to handle this without
 	duplicating code or a flag.
 */
-bool Solver::checkSetsContainsUnique(unordered_map<int, unordered_set<int>> sets, int curRow, int curCol, string type) {
+bool Solver::checkSetsContainsUnique(const unordered_map<int, unordered_set<int>> *pSets, int curRow, int curCol, string type) {
 
 	bool performedCancellation = false;
 	//check if any value in a row possible is not found in the other rows
 
 	vector <unordered_set<int>> vOtherSets;
+	unordered_map<int, unordered_set<int>> sets = *pSets;
 
 	//for each set
 	for (auto keyValue : sets)
@@ -578,6 +584,7 @@ bool Solver::cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn
 	bool removedValue = false;
 
 	for (int col = 0; col < BOARD_SIZE; col++)
+
 	{
 		if (col >= boxCol && col < boxCol + BOX_SIZE)//isInBoxRow(boxCol, col))
 			continue;
@@ -628,29 +635,6 @@ bool Solver::checkForValueMissing(unordered_set<int> possibleUnionValues, Tile t
 	return false;
 }
 
-void Solver::printPossibleValues()
-{
-	for (int row = 0; row < BOARD_SIZE; row++)
-	{
-		for (int col = 0; col < BOARD_SIZE; col++)
-		{
-			Tile tile = this->board->getTile(row, col);
-			int actualTileValue = tile.getActualValue();
-			
-			if (isOpenTile(actualTileValue))
-			{
-				printf("Tile(row %d, col %d): ", row, col);
-				unordered_set<int> possibleValuesOfTile = tile.getPossibleValues();
-				for (auto possible : possibleValuesOfTile)
-				{
-					printf("%d ", possible);
-				}
-				printf("\n");
-			}
-		}
-	}
-}
-
 bool Solver::isOpenTile(int value)
 {
 	return (value == -1);
@@ -668,9 +652,9 @@ bool Solver::removeValue(Tile tile, int value)
 
 	return removedValue;
 }
-Board Solver::getBoard()
+Board* Solver::getBoard()
 {
-	return *board;
+	return board;
 }
 
 void Solver::reset(Board *otherBoard) {
