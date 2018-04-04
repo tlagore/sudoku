@@ -103,7 +103,7 @@ void Interface::solveSpecificBoard(int boardNum)
 		printf("Number of solved tiles: %d \n", this->solver.getNumberSolved());
 		
 		char choice;
-		printf("Print remaining possible values? (y or n)\n");
+		printf("Print remaining candidate values? (y or n)\n");
 
 		while (!validChoice)
 		{
@@ -114,8 +114,7 @@ void Interface::solveSpecificBoard(int boardNum)
 			switch (choice)
 			{
 			case 'y':
-				solver.getBoard()->printPossibleValues();
-				printf("Add ability to print possible values here \n");
+				solver.getBoard()->printCandidateValues();
 				validChoice = true;
 				break;
 			case 'n':

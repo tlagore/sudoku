@@ -17,25 +17,25 @@ public:
 	~Tile();
 
 
-	void addPossibleValue(int value);
-	bool removePossibleValue(int value);
-	void clearPossibleValues();
+	void addCandidateValue(int value);
+	bool removeCandidateValue(int value);
+	void clearCandidateValues();
 
 	int getColumn();
 
 	int getRow();
 
 	
-	unordered_set<int> getPossibleValues();
+	unordered_set<int> getCandidateValues();
 
 	int getActualValue();
 
 	void setActualValue(int value);
-	void printPossibleValues();
+	void printCandidateValues();
 
 private:
 	int actualValue;
-	unordered_set<int> possibleValues;
+	unordered_set<int> candidateValues;
 	int row;
 	int column;
 };

@@ -9,8 +9,8 @@ Tile::Tile(int value, int row, int column) : actualValue{ value }, row{ row }, c
 
 //Copy constructor
 Tile::Tile(const Tile &tile) : actualValue{ tile.actualValue }, row{ tile.row }, column{ tile.column } {
-	for (auto val : tile.possibleValues)
-		this->possibleValues.insert(val);
+	for (auto val : tile.candidateValues)
+		this->candidateValues.insert(val);
 }
 
 //Override assignment operator
@@ -19,8 +19,8 @@ Tile & Tile::operator=(Tile otherTile)
 	this->actualValue = otherTile.actualValue;
 	this->row = otherTile.row;
 	this->column = otherTile.column;
-	for (auto value : otherTile.possibleValues)
-		this->possibleValues.insert(value);
+	for (auto value : otherTile.candidateValues)
+		this->candidateValues.insert(value);
 	
 	return *this;
 }
@@ -30,29 +30,29 @@ Tile::~Tile()
 
 }
 
-void Tile::addPossibleValue(int value)
+void Tile::addCandidateValue(int value)
 {
-	this->possibleValues.insert(value);
+	this->candidateValues.insert(value);
 }
 
 
 /*
-	attempts to remove a possible value from the tiles possibleValue list. If the value is present and is removed, true is returned, else false
+	attempts to remove a candidate value from the tiles candidateValue list. If the value is present and is removed, true is returned, else false
 */
-bool Tile::removePossibleValue(int value)
+bool Tile::removeCandidateValue(int value)
 {
-	if (this->possibleValues.find(value) != this->possibleValues.end())
+	if (this->candidateValues.find(value) != this->candidateValues.end())
 	{
-		this->possibleValues.erase(value);
+		this->candidateValues.erase(value);
 		return true;
 	}
 
 	return false;
 }
 
-void Tile::clearPossibleValues()
+void Tile::clearCandidateValues()
 {
-	this->possibleValues.clear();
+	this->candidateValues.clear();
 }
 
 int Tile::getColumn() 
@@ -66,9 +66,9 @@ int Tile::getRow()
 }
 
 
-unordered_set<int> Tile::getPossibleValues()
+unordered_set<int> Tile::getCandidateValues()
 {
-	return possibleValues;
+	return candidateValues;
 }
 
 
@@ -82,14 +82,14 @@ void Tile::setActualValue(int value)
 	if (value >= 1 && value <= 9)
 	{
 		this->actualValue = value;
-		this->possibleValues.clear();
+		this->candidateValues.clear();
 	}
 }
 
-void Tile::printPossibleValues()
+void Tile::printCandidateValues()
 {
-	for (auto possible : possibleValues)
+	for (auto candidate : candidateValues)
 	{
-		printf("%d ", possible);
+		printf("%d ", candidate);
 	}
 }

@@ -16,15 +16,15 @@ public:
 	~Board();
 	Tile getTile(int row, int column);
 	void setTileActualValue(int value, int row, int column);
-	void setTilePossibleValues(int row, int col, unordered_set<int>);
-	void addTilePossibleValue(int value, int row, int col);
-	void clearTilePossibleValues(int row, int col);
+	void setTileCandidateValues(int row, int col, unordered_set<int>);
+	void addTileCandidateValue(int value, int row, int col);
+	void clearTileCandidateValues(int row, int col);
 	bool isValidState();
 	bool isValidRow(Tile tile);
 	bool isValidColumn(Tile tile);
 	bool isValidBox(Tile tile);
-	void printPossibleValues();
-	bool removePossibleValue(int value, int row, int column);
+	void printCandidateValues();
+	bool removeCandidateValue(int value, int row, int column);
 	bool isSolved();
 	void printBoard();
 

@@ -63,23 +63,23 @@ void Board::setTileActualValue(int value, int row, int column)
 	board[row][column]->setActualValue(value);
 }
 
-void Board::setTilePossibleValues(int row, int col, unordered_set<int> possibleVals)
+void Board::setTileCandidateValues(int row, int col, unordered_set<int> candidateVals)
 {
 	Tile *tile = this->board[row][col];
-	tile->clearPossibleValues();
+	tile->clearCandidateValues();
 
-	for (auto value : possibleVals) {
-		tile->addPossibleValue(value);
+	for (auto value : candidateVals) {
+		tile->addCandidateValue(value);
 	}
 }
 
-void Board::addTilePossibleValue(int value, int row, int col) {
-	this->board[row][col]->addPossibleValue(value);
+void Board::addTileCandidateValue(int value, int row, int col) {
+	this->board[row][col]->addCandidateValue(value);
 }
 
-void Board::clearTilePossibleValues(int row, int col)
+void Board::clearTileCandidateValues(int row, int col)
 {
-	this->board[row][col]->clearPossibleValues();
+	this->board[row][col]->clearCandidateValues();
 }
 
 bool Board::isValidState()
@@ -164,7 +164,7 @@ bool Board::isValidBox(Tile tile)
 	return true;
 }
 
-void Board::printPossibleValues()
+void Board::printCandidateValues()
 {
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
@@ -176,16 +176,16 @@ void Board::printPossibleValues()
 			if (actualTileValue == -1)
 			{
 				printf("Tile(row %d, col %d): ", row, col);
-				tile->printPossibleValues();
+				tile->printCandidateValues();
 				printf("\n");
 			}
 		}
 	}
 }
 
-bool Board::removePossibleValue(int value, int row, int column)
+bool Board::removeCandidateValue(int value, int row, int column)
 {
-	return this->board[row][column]->removePossibleValue(value);
+	return this->board[row][column]->removeCandidateValue(value);
 }
 bool Board::isSolved()
 {

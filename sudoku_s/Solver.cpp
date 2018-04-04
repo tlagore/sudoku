@@ -12,9 +12,9 @@ Solver::Solver(Board *board)
 }
 
 /*
-	generatePossibleValues loops through the entire puzzle, generating all possible values for each tile
+	generateCandidateValues loops through the entire puzzle, generating all candidate values for each tile
 */
-void Solver::generatePossibleValues()
+void Solver::generateCandidateValues()
 {
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
@@ -30,23 +30,23 @@ void Solver::generatePossibleValues()
 }
 
 /*
-	generateTileValues takes in a specific row and column and generates the possible values for this Tile.
+	generateTileValues takes in a specific row and column and generates the candidate values for this Tile.
 
-	It does so by assuming that the tile has all possible values (1-9 for a 9x9 sudoku) and then iteratively 
-	removes possible values by checking the other values in the tiles respective row, column, and box
+	It does so by assuming that the tile has all candidate values (1-9 for a 9x9 sudoku) and then iteratively 
+	removes candidate values by checking the other values in the tiles respective row, column, and box
 */
 void Solver::generateTileValues(int row, int column)
 {
-	unordered_set<int> possibleValues = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+	unordered_set<int> candidateValues = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-	removeRowValues(row, column, &possibleValues);
-	removeColValues(row, column, &possibleValues);
-	removeBoxValues(row, column, &possibleValues);
+	removeRowValues(row, column, &candidateValues);
+	removeColValues(row, column, &candidateValues);
+	removeBoxValues(row, column, &candidateValues);
 
-	board->setTilePossibleValues(row, column, possibleValues);
+	board->setTileCandidateValues(row, column, candidateValues);
 
-	//if the possibleValues for this tile has only 1 value, it is the solution to the tile - add it to the singleValueTiles vector
-	if (possibleValues.size() == 1)
+	//if the candidateValues for this tile has only 1 value, it is the solution to the tile - add it to the singleValueTiles vector
+	if (candidateValues.size() == 1)
 	{
 		//Tile tile = this->board->getTile(row, column);
 		solveTile(this->board->getTile(row, column));
@@ -56,10 +56,10 @@ void Solver::generateTileValues(int row, int column)
 }
 
 /*
-	Removes row values as possible solutions to a tile by iterating through each column for the row, skipping its own Tile,
-	If a value is encountered is in the supplied possibleValue unordered_set, then it is removed as a possible value
+	Removes row values as candidate solutions to a tile by iterating through each column for the row, skipping its own Tile,
+	If a value is encountered is in the supplied candidateValue unordered_set, then it is removed as a candidate value
 */
-void Solver::removeRowValues(int row, int column, unordered_set<int>*possibleValues)
+void Solver::removeRowValues(int row, int column, unordered_set<int>*candidateValues)
 {
 	int curValue;
 
@@ -69,17 +69,17 @@ void Solver::removeRowValues(int row, int column, unordered_set<int>*possibleVal
 			continue;
 
 		curValue = board->getTile(row, c).getActualValue();
-		if (possibleValues->find(curValue) != possibleValues->end()) {
-			possibleValues->erase(curValue);
+		if (candidateValues->find(curValue) != candidateValues->end()) {
+			candidateValues->erase(curValue);
 		}
 	}
 }
 
 /*
-	Removes column values as possible solutions to a tile by iterating through each row for the row, skipping its own Tile,
-	If a value is encountered is in the supplied possibleValue unordered_set, then it is removed as a possible value
+	Removes column values as candidate solutions to a tile by iterating through each row for the row, skipping its own Tile,
+	If a value is encountered is in the supplied candidateValue unordered_set, then it is removed as a candidate value
 */
-void Solver::removeColValues(int row, int column, unordered_set<int>* possibleValues)
+void Solver::removeColValues(int row, int column, unordered_set<int>* candidateValues)
 {
 	int curValue;
 
@@ -89,17 +89,17 @@ void Solver::removeColValues(int row, int column, unordered_set<int>* possibleVa
 			continue;
 
 		curValue = board->getTile(r, column).getActualValue();
-		if (possibleValues->find(curValue) != possibleValues->end()) {
-			possibleValues->erase(curValue);
+		if (candidateValues->find(curValue) != candidateValues->end()) {
+			candidateValues->erase(curValue);
 		}
 	}
 }
 
 /*
-	Removes box values as possible solutions to a tile by iterating through the box that the tile belongs to,
-	If a value is encountered is in the supplied possibleValue unordered_set, then it is removed as a possible value
+	Removes box values as candidate solutions to a tile by iterating through the box that the tile belongs to,
+	If a value is encountered is in the supplied candidateValue unordered_set, then it is removed as a candidate value
 */
-void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleValues)
+void Solver::removeBoxValues(int row, int column, unordered_set<int>* candidateValues)
 {
 	//find what the row/column is the start of the box
 	int boxRow = row - (row % BOX_SIZE);
@@ -114,8 +114,8 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 				continue;
 
 			tileValue = this->board->getTile(curRow, curCol).getActualValue();
-			if (possibleValues->find(tileValue) != possibleValues->end()) {
-				possibleValues->erase(tileValue);
+			if (candidateValues->find(tileValue) != candidateValues->end()) {
+				candidateValues->erase(tileValue);
 			}
 		}
 	}
@@ -123,11 +123,12 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 
 
 void Solver::solveTile(Tile tile) {
-	int value = *tile.getPossibleValues().begin();
+	int value = *tile.getCandidateValues().begin();
 	int row = tile.getRow();
 	int col = tile.getColumn();
 
 	this->board->setTileActualValue(value, row, col);
+	this->numSolved++;
 
 	cancelRow(value, row, col);
 	cancelColumn(value, row, col);
@@ -137,8 +138,8 @@ void Solver::solveTile(Tile tile) {
 /*
 	solve() runs a series of checks to attempt to solve the board.
 
-	First the singleValueTiles vector is checked to see if there are any tiles that have only one possible solution.
-	Each Tile in the singleValueTiles vector has its value set to its only possible value, and then that value is removed
+	First the singleValueTiles vector is checked to see if there are any tiles that have only one candidate solution.
+	Each Tile in the singleValueTiles vector has its value set to its only candidate value, and then that value is removed
 	from other Tile values in the same row/column/box as the Tile that was set.
 
 	When the singleValueTiles set is exhausted, a check is performed to see if the board is solved
@@ -147,7 +148,7 @@ void Solver::solveTile(Tile tile) {
 */
 bool Solver::solve()
 {
-	generatePossibleValues();
+	generateCandidateValues();
 	
 	bool isSolved = false;
 
@@ -156,7 +157,7 @@ bool Solver::solve()
 		//if performAdvancedSolve doesn't find a new Tile value then our sudoku solver can't handle this puzzle, exit solve loop
 		if (!performSolve())
 		{
-			//printPossibleValues();
+			//printCandidateValues();
 			break;
 		}
 	}
@@ -167,7 +168,7 @@ bool Solver::solve()
 
 
 /*
-	cancelRow takes in a value and cancels that value as a possible value from all Tiles in the supplied row
+	cancelRow takes in a value and cancels that value as a candidate value from all Tiles in the supplied row
 */
 void Solver::cancelRow(int value, int row, int column)
 {
@@ -186,7 +187,7 @@ void Solver::cancelRow(int value, int row, int column)
 }
 
 /*
-	cancelColumn takes in a value and cancels that value as a possible value from all Tiles in the supplied column
+	cancelColumn takes in a value and cancels that value as a candidate value from all Tiles in the supplied column
 */
 void Solver::cancelColumn(int value, int rowCurrTile, int column)
 {
@@ -203,7 +204,7 @@ void Solver::cancelColumn(int value, int rowCurrTile, int column)
 }
 
 /*
-	cancelBox takes in a value and cancels that value as a possible value from all Tiles in the box to which the Tile belongs
+	cancelBox takes in a value and cancels that value as a candidate value from all Tiles in the box to which the Tile belongs
 */
 void Solver::cancelBox(int value, int row, int column)
 {
@@ -225,7 +226,7 @@ void Solver::cancelBox(int value, int row, int column)
 }
 
 /*
-	performSolve performs a series of checks that go above simple cross-hatching (eliminating possible values by checking 
+	performSolve performs a series of checks that go above simple cross-hatching (eliminating candidate values by checking 
 	the values of interesecting rows/columns and values within the box itself) to generate new solutions for the puzzle.
 
 	These methods are:
@@ -234,15 +235,15 @@ void Solver::cancelBox(int value, int row, int column)
 			  a line can be ruled out as candidates in a block (or box) that intersects the line in question.
 
 		- row union / column union
-			- This checks if any particular possible value in a Tile is the not found in the union of the possible
+			- This checks if any particular candidate value in a Tile is the not found in the union of the candidate
 			  values of the other tiles corresponding to that tiles row or column. This indicates that it is the 
-			  only possible Tile for the value for that row/column
+			  only candidate Tile for the value for that row/column
 			- Same as box line reduction except for column & row
 
 		- check unsolved cancel
 			- in progress..
-			- Checks to see if a cancellation can be made by seeing that a possible value appears in only one row or column in a specific box, 
-			  therefore the value can be removed as a possible value from all other boxes in the specified row or column
+			- Checks to see if a cancellation can be made by seeing that a candidate value appears in only one row or column in a specific box, 
+			  therefore the value can be removed as a candidate value from all other boxes in the specified row or column
 */
 bool Solver::performSolve() 
 {
@@ -254,9 +255,9 @@ bool Solver::performSolve()
 		{
 			Tile tile = this->board->getTile(row, column);
 			int tileValue = tile.getActualValue();
-			int possibleSize = tile.getPossibleValues().size();
+			int candidateSize = tile.getCandidateValues().size();
 		
-			if (isOpenTile(tileValue) && possibleSize > 1)
+			if (isOpenTile(tileValue) && candidateSize > 1)
 			{
 				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
 				foundSolution = checkRowUnion(row, column) || foundSolution;
@@ -276,9 +277,9 @@ bool Solver::performSolve()
 	A box line reduction is defined as: "A form of intersection removal in which candidates which must belong to
 	a line can be ruled out as candidates in a block (or box) that intersects the line in question."
 
-	checkBoxLineReduction is performed by generating a union of all possible values of the other tiles within the same
-	square as the tile being checked. Then the possible values of the tile being checked are checked against the union
-	of the other tiles. If a possible value is not found to be in the union, a box line reduction has been detected,
+	checkBoxLineReduction is performed by generating a union of all candidate values of the other tiles within the same
+	square as the tile being checked. Then the candidate values of the tile being checked are checked against the union
+	of the other tiles. If a candidate value is not found to be in the union, a box line reduction has been detected,
 	solve the tile.
 
 	Inputs: (int) row - row of tile being checked
@@ -290,7 +291,7 @@ bool Solver::checkBoxLineReduction(int row, int column)
 {
 	int boxRow = row - (row % BOX_SIZE);
 	int boxCol = column - (column % BOX_SIZE);
-	unordered_set<int> possibleUnion;
+	unordered_set<int> candidateUnion;
 	Tile otherTile,
 		tile = this->board->getTile(row, column);
 	bool foundSolution = false;
@@ -307,22 +308,22 @@ bool Solver::checkBoxLineReduction(int row, int column)
 
 			if (isOpenTile(actualTileValue))
 			{
-				for (auto possible : otherTile.getPossibleValues())
-					possibleUnion.insert(possible);
+				for (auto candidate : otherTile.getCandidateValues())
+					candidateUnion.insert(candidate);
 			}
 
 		}
 	}
 
-	foundSolution = checkForValueMissing(possibleUnion, tile);
+	foundSolution = checkForValueMissing(candidateUnion, tile);
 
 	return foundSolution;
 }
 
 /*
-checkRowUnion checks an indivdual tile's possible values against the union of the rest of the row's possible values
+checkRowUnion checks an indivdual tile's candidate values against the union of the rest of the row's candidate values
 
-If a possible value of a tile is not found to be in the union of the rest of the row, it is the only place that a value
+If a candidate value of a tile is not found to be in the union of the rest of the row, it is the only place that a value
 can go. Solve it.
 
 Inputs: (int) row - row of tile being checked
@@ -336,7 +337,7 @@ bool Solver::checkRowUnion(int currRow, int currColumn)
 	Tile otherTile,
 		tile = this->board->getTile(currRow, currColumn);
 	int actualTileValue;
-	unordered_set<int> possibleRowUnionValues;
+	unordered_set<int> candidateRowUnionValues;
 	for (int col = 0; col < BOARD_SIZE; col++)
 	{
 		otherTile = this->board->getTile(currRow, col);
@@ -346,23 +347,23 @@ bool Solver::checkRowUnion(int currRow, int currColumn)
 
 		if (isOpenTile(actualTileValue))
 		{
-			for (auto possible : otherTile.getPossibleValues())
+			for (auto candidate : otherTile.getCandidateValues())
 			{
-				possibleRowUnionValues.insert(possible);
+				candidateRowUnionValues.insert(candidate);
 			}
 		}
 	}
 
-	foundSolution = checkForValueMissing(possibleRowUnionValues, tile);
+	foundSolution = checkForValueMissing(candidateRowUnionValues, tile);
 
 	return foundSolution;
 }
 
 
 /*
-	checkColumnUnion checks an indivdual tiles possible values against the union of the rest of the column's possible values
+	checkColumnUnion checks an indivdual tiles candidate values against the union of the rest of the column's candidate values
 
-	If a possible value of a tile is not found to be in the union of the rest of the column, it is the only place that a value 
+	If a candidate value of a tile is not found to be in the union of the rest of the column, it is the only place that a value 
 	can go. Solve it.
 
 	Inputs: (int) row - row of tile being checked
@@ -376,7 +377,7 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 	Tile otherTile,
 		tile = this->board->getTile(currRow, currColumn);
 	int actualTileValue;
-	unordered_set<int> possibleRowUnionValues;
+	unordered_set<int> candidateRowUnionValues;
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
 		otherTile = this->board->getTile(row, currColumn);
@@ -386,14 +387,14 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 
 		if (isOpenTile(actualTileValue))
 		{
-			for (auto possible : otherTile.getPossibleValues())
+			for (auto candidate : otherTile.getCandidateValues())
 			{
-				possibleRowUnionValues.insert(possible);
+				candidateRowUnionValues.insert(candidate);
 			}
 		}
 	}
 
-	foundSolution = checkForValueMissing(possibleRowUnionValues, tile);
+	foundSolution = checkForValueMissing(candidateRowUnionValues, tile);
 
 	return foundSolution;
 }
@@ -403,8 +404,8 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 	Attempt #2 at checkUnsolvedCancel
 
 	Idea:
-		- Create a mapping of row: all possible values for a particular box.
-		- check each value in each mapping to see if appears in the other row possible values.
+		- Create a mapping of row: all candidate values for a particular box.
+		- check each value in each mapping to see if appears in the other row candidate values.
 		- if the value does not belong to the other mappings, it *must* be found in this row of this box 
 		- cancel the particular value from all other tiles in same row the other boxes
 	
@@ -415,8 +416,8 @@ bool Solver::checkUnsolvedCancel2(int curRow, int curCol)
 {
 	bool foundSolution = false;
 
-	unordered_map<int, unordered_set<int>> rowPossibles;
-	unordered_map<int, unordered_set<int>> colPossibles;
+	unordered_map<int, unordered_set<int>> rowCandidates;
+	unordered_map<int, unordered_set<int>> colCandidates;
 	//find start of box row
 	int boxRow = curRow - (curRow % BOX_SIZE);
 	//find start of box column
@@ -428,19 +429,19 @@ bool Solver::checkUnsolvedCancel2(int curRow, int curCol)
 	{
 		for (int curBoxCol = boxCol; curBoxCol < boxCol + BOX_SIZE; curBoxCol++)
 		{
-			// for each possible value in this tile add it to the corresponding row/column set of possible values
-			for (auto possible : this->board->getTile(curBoxRow, curBoxCol).getPossibleValues())
+			// for each candidate value in this tile add it to the corresponding row/column set of candidate values
+			for (auto candidate : this->board->getTile(curBoxRow, curBoxCol).getCandidateValues())
 			{
-				rowPossibles[curBoxRow].insert(possible);
-				colPossibles[curBoxCol].insert(possible);
+				rowCandidates[curBoxRow].insert(candidate);
+				colCandidates[curBoxCol].insert(candidate);
 			}
 		}
 	}
 
 	//check to see if the rows of the box or the columns of a box have a unique value in a particular column or row
 	//and set cancellation flag based on this
-	performedCancellation = checkSetsContainsUnique(&rowPossibles, curRow, curCol, "row")
-		|| checkSetsContainsUnique(&colPossibles, curRow, curCol, "column");
+	performedCancellation = checkSetsContainsUnique(&rowCandidates, curRow, curCol, "row")
+		|| checkSetsContainsUnique(&colCandidates, curRow, curCol, "column");
 
 	return performedCancellation;
 }
@@ -456,7 +457,7 @@ bool Solver::checkUnsolvedCancel2(int curRow, int curCol)
 bool Solver::checkSetsContainsUnique(const unordered_map<int, unordered_set<int>> *pSets, int curRow, int curCol, string type) {
 
 	bool performedCancellation = false;
-	//check if any value in a row possible is not found in the other rows
+	//check if any value in a row candidate is not found in the other rows
 
 	vector <unordered_set<int>> vOtherSets;
 	unordered_map<int, unordered_set<int>> sets = *pSets;
@@ -473,12 +474,12 @@ bool Solver::checkSetsContainsUnique(const unordered_map<int, unordered_set<int>
 			vOtherSets.push_back(otherSets.second);
 		}
 
-		//for each possible value in our test set
-		for (auto possible : keyValue.second)
+		//for each candidate value in our test set
+		for (auto candidate : keyValue.second)
 		{
 			bool notInOtherSets = true;
 			for (auto set : vOtherSets) {
-				notInOtherSets = !setContains(set, possible) && notInOtherSets;
+				notInOtherSets = !setContains(set, candidate) && notInOtherSets;
 
 				//if in any of the sets, notInOtherSets = false
 				if (!notInOtherSets)
@@ -487,9 +488,9 @@ bool Solver::checkSetsContainsUnique(const unordered_map<int, unordered_set<int>
 			if (notInOtherSets)
 			{
 				if (type == "row")
-					performedCancellation = cancelRowSkipSameBox(possible, keyValue.first, curCol) || performedCancellation;
+					performedCancellation = cancelRowSkipSameBox(candidate, keyValue.first, curCol) || performedCancellation;
 				else if (type == "column") {
-					performedCancellation = cancelColumnSkipSameBox(possible, curRow, keyValue.first) || performedCancellation;
+					performedCancellation = cancelColumnSkipSameBox(candidate, curRow, keyValue.first) || performedCancellation;
 				}
 			}
 		}
@@ -514,16 +515,16 @@ bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 {
 	bool foundSolution = false;
 	Tile currTile = this->board->getTile(currRow, currColumn);
-	for (auto possible : currTile.getPossibleValues())
+	for (auto candidate : currTile.getCandidateValues())
 	{
-		int rowOrCol = checkForValueInBox(possible, currRow, currColumn);
+		int rowOrCol = checkForValueInBox(candidate, currRow, currColumn);
 		switch(rowOrCol)	
 		{
 			case 0:
-				foundSolution = cancelRowSkipSameBox(possible, currRow, currColumn) || foundSolution;
+				foundSolution = cancelRowSkipSameBox(candidate, currRow, currColumn) || foundSolution;
 				break;
 			case 1:
-				foundSolution = cancelColumnSkipSameBox(possible, currRow, currColumn) || foundSolution;
+				foundSolution = cancelColumnSkipSameBox(candidate, currRow, currColumn) || foundSolution;
 				break;
 			default:
 				break;
@@ -535,10 +536,10 @@ bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 /*TODO make this less hacky of a way of doing it for now I just want to test if this logic works
 Hacky being
 1. Using Flags and returning flags
-2. initializing the otherTile, otherTileActualValue and possibleValuesOfOtherTile in the loops.
+2. initializing the otherTile, otherTileActualValue and candidateValuesOfOtherTile in the loops.
 	Although I think its hacky it seems neccessary to make it work not sure why.
 */
-int Solver::checkForValueInBox(int currPossible, int currRow, int currColumn)
+int Solver::checkForValueInBox(int currCandidate, int currRow, int currColumn)
 {
 	int inRowFlag = 0;
 	int inColumnFlag = 1;
@@ -555,11 +556,11 @@ int Solver::checkForValueInBox(int currPossible, int currRow, int currColumn)
 		{
 			Tile otherTile = this->board->getTile(row, col);
 			int otherTileActualValue = otherTile.getActualValue();
-			unordered_set<int> possibleValuesOfOtherTile = otherTile.getPossibleValues();
+			unordered_set<int> candidateValuesOfOtherTile = otherTile.getCandidateValues();
 
 			if (isOpenTile(otherTileActualValue))
 			{
-				if (isInPossibleValues(possibleValuesOfOtherTile, currPossible))
+				if (isInCandidateValues(candidateValuesOfOtherTile, currCandidate))
 				{
 					if (col == currColumn && row == currRow)
 						continue;
@@ -586,12 +587,12 @@ int Solver::checkForValueInBox(int currPossible, int currRow, int currColumn)
 	return validCancelFlag;
 }
 
-bool Solver::isInPossibleValues(unordered_set<int> possibleValues, int possible)
+bool Solver::isInCandidateValues(unordered_set<int> candidateValues, int candidate)
 {
-	return (possibleValues.find(possible) != possibleValues.end());
+	return (candidateValues.find(candidate) != candidateValues.end());
 }
 
-bool Solver::cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn)
+bool Solver::cancelRowSkipSameBox(int candidateValue, int currRow, int currColumn)
 {
 	int boxCol = currColumn - (currColumn % BOX_SIZE);
 	bool removedValue = false;
@@ -605,14 +606,14 @@ bool Solver::cancelRowSkipSameBox(int possibleValue, int currRow, int currColumn
 		{
 			Tile tile = board->getTile(currRow, col);
 			if(isOpenTile(tile.getActualValue()))
-				removedValue = removeValue(tile, possibleValue) || removedValue;
+				removedValue = removeValue(tile, candidateValue) || removedValue;
 		}
 	}
 
 	return removedValue;
 }
 
-bool Solver::cancelColumnSkipSameBox(int possibleValue, int currRow, int currColumn)
+bool Solver::cancelColumnSkipSameBox(int candidateValue, int currRow, int currColumn)
 {
 	int boxRow = currRow - (currRow % BOX_SIZE);
 	bool removedValue = false;
@@ -624,22 +625,22 @@ bool Solver::cancelColumnSkipSameBox(int possibleValue, int currRow, int currCol
 		else
 		{
 			Tile tile = board->getTile(row, currColumn);
-			removedValue =  removeValue(tile, possibleValue) || removedValue;
+			removedValue =  removeValue(tile, candidateValue) || removedValue;
 		}
 	}
 
 	return removedValue;
 }
 
-bool Solver::checkForValueMissing(unordered_set<int> possibleUnionValues, Tile tile)
+bool Solver::checkForValueMissing(unordered_set<int> candidateUnionValues, Tile tile)
 {
-	if (tile.getPossibleValues().size() > 1) {
-		for (auto possible : tile.getPossibleValues())
+	if (tile.getCandidateValues().size() > 1) {
+		for (auto candidate : tile.getCandidateValues())
 		{
-			if (possibleUnionValues.find(possible) == possibleUnionValues.end())
+			if (candidateUnionValues.find(candidate) == candidateUnionValues.end())
 			{
-				this->board->clearTilePossibleValues(tile.getRow(), tile.getColumn());
-				this->board->addTilePossibleValue(possible, tile.getRow(), tile.getColumn());
+				this->board->clearTileCandidateValues(tile.getRow(), tile.getColumn());
+				this->board->addTileCandidateValue(candidate, tile.getRow(), tile.getColumn());
 				solveTile(this->board->getTile(tile.getRow(), tile.getColumn()));
 				//this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
 				return true;
@@ -657,10 +658,10 @@ bool Solver::isOpenTile(int value)
 bool Solver::removeValue(Tile tile, int value)
 {
 	bool removedValue = false;
-	if (board->getTile(tile.getRow(), tile.getColumn()).getPossibleValues().size() > 1)
+	if (board->getTile(tile.getRow(), tile.getColumn()).getCandidateValues().size() > 1)
 	{
-		removedValue = board->removePossibleValue(value, tile.getRow(), tile.getColumn());
-		if (board->getTile(tile.getRow(), tile.getColumn()).getPossibleValues().size() == 1)
+		removedValue = board->removeCandidateValue(value, tile.getRow(), tile.getColumn());
+		if (board->getTile(tile.getRow(), tile.getColumn()).getCandidateValues().size() == 1)
 			solveTile(board->getTile(tile.getRow(), tile.getColumn()));
 			//singleValueTiles.push_back(board->getTile(tile.getRow(), tile.getColumn()));
 	}
