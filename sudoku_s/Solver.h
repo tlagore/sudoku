@@ -41,7 +41,7 @@ private:
 
 	///Tyrone attempt at unsolved cancel functions
 	///Note: These functions call cancelRowSkipSameBox and cancelColumnSkipSameBox
-	bool checkUnsolvedCancel2(int curRow, int curCol);
+	bool checkPointedTuple(int curRow, int curCol);
 	bool checkSetsContainsUnique(const unordered_map<int, unordered_set<int>> *pSets, int curRow, int curCol, string type);
 	bool setContains(unordered_set<int>, int value);
 	///

@@ -241,7 +241,6 @@ void Solver::cancelBox(int value, int row, int column)
 			- Same as box line reduction except for column & row
 
 		- check unsolved cancel
-			- in progress..
 			- Checks to see if a cancellation can be made by seeing that a candidate value appears in only one row or column in a specific box, 
 			  therefore the value can be removed as a candidate value from all other boxes in the specified row or column
 */
@@ -262,10 +261,26 @@ bool Solver::performSolve()
 				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
 				foundSolution = checkRowUnion(row, column) || foundSolution;
 
-				foundSolution = checkColumnUnion(row, column) || foundSolution;		
+				foundSolution = checkColumnUnion(row, column) || foundSolution;
+
+				//TODO: implement check for XWingCancel
+				//foundSolution = checkXWingCancel(row, column);
+
+				//TODO: implement check for Naked tuple (when a tuple of tiles contains the same "tuple" candidate solutions)
+				// for example if 3 tiles share the candidate values 1, 3, 7, then 1, 3, and 7 must belong to those tiles.. cancel
+				// 1, 3, and 7 from row OR column OR box, depending where the tuple was found.
+				//foundSolution = checkNakedTuple(row, column);
+
+				//TODO: implement check for Check Hidden Tuple (when a tuple of tiles contains the same "tuple" candidate solutions
+				// but also have additional values present).
+				// This is a much harder check, if 4 and 5 are only found in 2 tiles, but have many other "candidates", 4 and 5 must 
+				// belong to these two tiles, cancel all possible other values in these 2 tiles except for 4 and 5.
+				// can also be extended to a larger tuple.
+				//foundSolution = checkHiddenTuple(row, column);
 			}
+			//checked once per box, as checkUnsolvedCancel will find all 
 			if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
-				foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
+				foundSolution = checkPointedTuple(row, column) || foundSolution;
 		}
 	}
 
@@ -412,7 +427,7 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 	AND YEAH I USED 1 R IN CUR. GIT SUM.	
 */
 
-bool Solver::checkUnsolvedCancel2(int curRow, int curCol)
+bool Solver::checkPointedTuple(int curRow, int curCol)
 {
 	bool foundSolution = false;
 
