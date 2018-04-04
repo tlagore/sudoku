@@ -6,6 +6,13 @@
 #include <unordered_set>
 #include <vector> 
 
+/*
+	Solver maintains and solves a given sudoku board using sudoku cancellation deduction techniques
+
+
+	@author Tyrone Lagore & Johnny Simmonds
+	@version 4/4/2018
+*/
 class Solver
 {
 public:
