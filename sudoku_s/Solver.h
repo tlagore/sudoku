@@ -23,8 +23,6 @@ public:
 	~Solver();
 
 private:
-
-	deque<Tile> singleValueTiles;
 	Board *board;
 	int numSolved = 0;
 	void generatePossibleValues();
@@ -32,11 +30,12 @@ private:
 	void removeRowValues(int row, int column, unordered_set<int>* possibleValues);
 	void removeColValues(int row, int column, unordered_set<int>* possibleValues);
 	void removeBoxValues(int row, int column, unordered_set<int>* possibleValues);
+	void solveTile(Tile tile);
 	void cancelBox(int value, int row, int column);
 	void cancelRow(int value, int row, int column);
 	void cancelColumn(int value, int row, int column);
 	bool removeValue(Tile tile, int value);
-	bool performAdvancedSolve();
+	bool performSolve();
 	bool checkRowUnion(int row, int column);
 	bool checkColumnUnion(int row, int column);
 

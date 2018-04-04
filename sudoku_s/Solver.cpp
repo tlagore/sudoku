@@ -48,8 +48,9 @@ void Solver::generateTileValues(int row, int column)
 	//if the possibleValues for this tile has only 1 value, it is the solution to the tile - add it to the singleValueTiles vector
 	if (possibleValues.size() == 1)
 	{
-		Tile tile = this->board->getTile(row, column);
-		this->singleValueTiles.push_back(this->board->getTile(row, column));
+		//Tile tile = this->board->getTile(row, column);
+		solveTile(this->board->getTile(row, column));
+		//this->singleValueTiles.push_back(this->board->getTile(row, column));
 	}
 
 }
@@ -120,6 +121,19 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* possibleVa
 	}
 }
 
+
+void Solver::solveTile(Tile tile) {
+	int value = *tile.getPossibleValues().begin();
+	int row = tile.getRow();
+	int col = tile.getColumn();
+
+	this->board->setTileActualValue(value, row, col);
+
+	cancelRow(value, row, col);
+	cancelColumn(value, row, col);
+	cancelBox(value, row, col);
+}
+
 /*
 	solve() runs a series of checks to attempt to solve the board.
 
@@ -139,33 +153,11 @@ bool Solver::solve()
 
 	while (!this->board->isSolved()) 
 	{
-		while (singleValueTiles.size() != 0)
+		//if performAdvancedSolve doesn't find a new Tile value then our sudoku solver can't handle this puzzle, exit solve loop
+		if (!performSolve())
 		{
-
-			Tile tile = singleValueTiles.front();
-			int row = tile.getRow();
-			int col = tile.getColumn();
-			int value = *tile.getPossibleValues().begin();
-
-			this->board->setTileActualValue(value, row, col);
-			
-			numSolved++;
-
-			cancelRow(value, row, col);
-			cancelColumn(value, row, col);
-			cancelBox(value, row, col);
-
-			singleValueTiles.pop_front();
-		}
-
-		if (!this->board->isSolved()) 
-		{
-			//if performAdvancedSolve doesn't find a new Tile value then our sudoku solver can't handle this puzzle, exit solve loop
-			if (!performAdvancedSolve())
-			{
-				//printPossibleValues();
-				break;
-			}
+			//printPossibleValues();
+			break;
 		}
 	}
 
@@ -233,7 +225,7 @@ void Solver::cancelBox(int value, int row, int column)
 }
 
 /*
-	performAdvancedSolve performs a series of checks that go above simple cross-hatching (eliminating possible values by checking 
+	performSolve performs a series of checks that go above simple cross-hatching (eliminating possible values by checking 
 	the values of interesecting rows/columns and values within the box itself) to generate new solutions for the puzzle.
 
 	These methods are:
@@ -252,7 +244,7 @@ void Solver::cancelBox(int value, int row, int column)
 			- Checks to see if a cancellation can be made by seeing that a possible value appears in only one row or column in a specific box, 
 			  therefore the value can be removed as a possible value from all other boxes in the specified row or column
 */
-bool Solver::performAdvancedSolve() 
+bool Solver::performSolve() 
 {
 	bool foundSolution = false;
 
@@ -266,17 +258,12 @@ bool Solver::performAdvancedSolve()
 		
 			if (isOpenTile(tileValue) && possibleSize > 1)
 			{
-				if (this->singleValueTiles.size() == 0)
-					foundSolution = checkBoxLineReduction(row, column) || foundSolution;
+				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
+				foundSolution = checkRowUnion(row, column) || foundSolution;
 
-				if (this->singleValueTiles.size() == 0)
-					foundSolution = checkRowUnion(row, column) || foundSolution;
-
-				if (this->singleValueTiles.size() == 0)
-					foundSolution = checkColumnUnion(row, column) || foundSolution;
-				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;				
+				foundSolution = checkColumnUnion(row, column) || foundSolution;		
 			}
-			if (this->singleValueTiles.size() == 0 && row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
+			if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
 				foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
 		}
 	}
@@ -471,9 +458,6 @@ bool Solver::checkSetsContainsUnique(const unordered_map<int, unordered_set<int>
 					performedCancellation = cancelColumnSkipSameBox(possible, curRow, keyValue.first) || performedCancellation;
 				}
 			}
-
-			if (this->singleValueTiles.size() > 0)
-				return performedCancellation;
 		}
 		vOtherSets.clear();
 	}
@@ -622,7 +606,8 @@ bool Solver::checkForValueMissing(unordered_set<int> possibleUnionValues, Tile t
 			{
 				this->board->clearTilePossibleValues(tile.getRow(), tile.getColumn());
 				this->board->addTilePossibleValue(possible, tile.getRow(), tile.getColumn());
-				this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
+				solveTile(this->board->getTile(tile.getRow(), tile.getColumn()));
+				//this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
 				return true;
 			}
 		}
@@ -642,7 +627,8 @@ bool Solver::removeValue(Tile tile, int value)
 	{
 		removedValue = board->removePossibleValue(value, tile.getRow(), tile.getColumn());
 		if (board->getTile(tile.getRow(), tile.getColumn()).getPossibleValues().size() == 1)
-			singleValueTiles.push_back(board->getTile(tile.getRow(), tile.getColumn()));
+			solveTile(board->getTile(tile.getRow(), tile.getColumn()));
+			//singleValueTiles.push_back(board->getTile(tile.getRow(), tile.getColumn()));
 	}
 
 	return removedValue;
@@ -654,7 +640,6 @@ Board* Solver::getBoard()
 
 void Solver::reset(Board *otherBoard) {
 	this->numSolved = 0;
-	this->singleValueTiles.clear();
 	//delete this->board;
 	this->board = NULL;
 	this->board = otherBoard;
