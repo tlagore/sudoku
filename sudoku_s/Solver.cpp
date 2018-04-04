@@ -274,13 +274,10 @@ bool Solver::performAdvancedSolve()
 
 				if (this->singleValueTiles.size() == 0)
 					foundSolution = checkColumnUnion(row, column) || foundSolution;
-				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;
-
-				//ideally this should only need to be checked once per box - but for some reason it is having trouble with that
-				if (this->singleValueTiles.size() == 0)
-					foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
-				
+				//foundSolution = checkUnsolvedCancel(row, column) || foundSolution;				
 			}
+			if (this->singleValueTiles.size() == 0 && row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
+				foundSolution = checkUnsolvedCancel2(row, column) || foundSolution;
 		}
 	}
 
@@ -474,6 +471,9 @@ bool Solver::checkSetsContainsUnique(const unordered_map<int, unordered_set<int>
 					performedCancellation = cancelColumnSkipSameBox(possible, curRow, keyValue.first) || performedCancellation;
 				}
 			}
+
+			if (this->singleValueTiles.size() > 0)
+				return performedCancellation;
 		}
 		vOtherSets.clear();
 	}
