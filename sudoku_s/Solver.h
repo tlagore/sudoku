@@ -29,9 +29,9 @@ private:
 	void generateTileValues(int row, int column);
 	void removeRowValues(int row, int column, unordered_set<int>* candidateValues);
 	void removeColValues(int row, int column, unordered_set<int>* candidateValues);
-	void removeBoxValues(int row, int column, unordered_set<int>* candidateValues);
+	void removeRegionValues(int row, int column, unordered_set<int>* candidateValues);
 	void solveTile(Tile tile);
-	void cancelBox(int value, int row, int column);
+	void cancelRegion(int value, int row, int column);
 	void cancelRow(int value, int row, int column);
 	void cancelColumn(int value, int row, int column);
 	bool removeValue(Tile tile, int value);
@@ -40,18 +40,19 @@ private:
 	bool checkColumnUnion(int row, int column);
 
 	///Tyrone attempt at unsolved cancel functions
-	///Note: These functions call cancelRowSkipSameBox and cancelColumnSkipSameBox
+	///Note: These functions call cancelRowSkipSameRegion and cancelColumnSkipSameRegion
 	bool checkPointedTuple(int curRow, int curCol);
 	bool checkSetsContainsUnique(const unordered_map<int, unordered_set<int>> *pSets, int curRow, int curCol, string type);
 	bool setContains(unordered_set<int>, int value);
 	///
 
 	bool checkUnsolvedCancel(int currRow, int currColumn);
-	bool cancelRowSkipSameBox(int candidateValue, int currRow, int currColumn);
-	bool cancelColumnSkipSameBox(int candidateValue, int currRow, int currColumn);
-	int checkForValueInBox(int currCandidate, int currRow, int currColumn);
+	bool cancelRowSkipSameRegion(int candidateValue, int currRow, int currColumn);
+	bool cancelColumnSkipSameRegion(int candidateValue, int currRow, int currColumn);
+	int checkForValueInRegion(int currCandidate, int currRow, int currColumn);
+	//bool isInCandidateValues(unordered_set<int> candidateValues, int candidate);
 	bool checkForValueMissing(unordered_set<int> candidateUnionValues, Tile tile);
 	bool isOpenTile(int value);
-	bool checkBoxLineReduction(int row, int column);
+	bool checkRegionLineReduction(int row, int column);
 };
 

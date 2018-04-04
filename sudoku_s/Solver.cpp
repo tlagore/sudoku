@@ -33,7 +33,7 @@ void Solver::generateCandidateValues()
 	generateTileValues takes in a specific row and column and generates the candidate values for this Tile.
 
 	It does so by assuming that the tile has all candidate values (1-9 for a 9x9 sudoku) and then iteratively 
-	removes candidate values by checking the other values in the tiles respective row, column, and box
+	removes candidate values by checking the other values in the tiles respective row, column, and region
 */
 void Solver::generateTileValues(int row, int column)
 {
@@ -41,7 +41,7 @@ void Solver::generateTileValues(int row, int column)
 
 	removeRowValues(row, column, &candidateValues);
 	removeColValues(row, column, &candidateValues);
-	removeBoxValues(row, column, &candidateValues);
+	removeRegionValues(row, column, &candidateValues);
 
 	board->setTileCandidateValues(row, column, candidateValues);
 
@@ -96,19 +96,19 @@ void Solver::removeColValues(int row, int column, unordered_set<int>* candidateV
 }
 
 /*
-	Removes box values as candidate solutions to a tile by iterating through the box that the tile belongs to,
+	Removes region values as candidate solutions to a tile by iterating through the region that the tile belongs to,
 	If a value is encountered is in the supplied candidateValue unordered_set, then it is removed as a candidate value
 */
-void Solver::removeBoxValues(int row, int column, unordered_set<int>* candidateValues)
+void Solver::removeRegionValues(int row, int column, unordered_set<int>* candidateValues)
 {
-	//find what the row/column is the start of the box
-	int boxRow = row - (row % BOX_SIZE);
-	int boxCol = column - (column % BOX_SIZE);
+	//find what the row/column is the start of the region
+	int regionRow = row - (row % BOX_SIZE);
+	int regionCol = column - (column % BOX_SIZE);
 	int tileValue;
 
-	//loop from box start row/column to the end of the box row/column
-	for (int curRow = boxRow; curRow < boxRow + BOX_SIZE; curRow++) {
-		for (int curCol = boxCol; curCol < boxCol + BOX_SIZE; curCol++) {
+	//loop from region start row/column to the end of the region row/column
+	for (int curRow = regionRow; curRow < regionRow + BOX_SIZE; curRow++) {
+		for (int curCol = regionCol; curCol < regionCol + BOX_SIZE; curCol++) {
 			//skip the Tile we are checking for
 			if (curCol == column && curRow == row)
 				continue;
@@ -126,7 +126,7 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* candidateV
 	
 	It checks to ensure that the tile has only one candidate value, then sets the value to its only candidate value.
 
-	It then cancels in the row, column, and box for which the tile belongs, removing all candidate values that are equal 
+	It then cancels in the row, column, and region for which the tile belongs, removing all candidate values that are equal 
 	to the value set in this tile.
 
 	Inputs: (Tile) tile - the tile for which the actual value is being set
@@ -136,16 +136,25 @@ void Solver::solveTile(Tile tile) {
 	// ensure we are being asked to solve a tile that has only one candidate value
 
 	if (tile.getCandidateValues().size() == 1) {
+
+		
+		if (tile.getRow() == 7 && tile.getColumn() == 8)
+			printf("here");
 		int value = *tile.getCandidateValues().begin();
 		int row = tile.getRow();
 		int col = tile.getColumn();
 
+		printf("row: %d  col: %d value: %d\n", tile.getRow(), tile.getColumn(), value);
+		board->printCandidateValues();
+
 		this->board->setTileActualValue(value, row, col);
 		this->numSolved++;
 
+		board->printBoard();
+
 		cancelRow(value, row, col);
 		cancelColumn(value, row, col);
-		cancelBox(value, row, col);
+		cancelRegion(value, row, col);
 	}
 }
 
@@ -154,7 +163,7 @@ void Solver::solveTile(Tile tile) {
 
 	First the singleValueTiles vector is checked to see if there are any tiles that have only one candidate solution.
 	Each Tile in the singleValueTiles vector has its value set to its only candidate value, and then that value is removed
-	from other Tile values in the same row/column/box as the Tile that was set.
+	from other Tile values in the same row/column/region as the Tile that was set.
 
 	When the singleValueTiles set is exhausted, a check is performed to see if the board is solved
 	If the board is not solved, more advanced checks are performed to see if further cancellations can be made.
@@ -218,16 +227,16 @@ void Solver::cancelColumn(int value, int rowCurrTile, int column)
 }
 
 /*
-	cancelBox takes in a value and cancels that value as a candidate value from all Tiles in the box to which the Tile belongs
+	cancelRegion takes in a value and cancels that value as a candidate value from all Tiles in the region to which the Tile belongs
 */
-void Solver::cancelBox(int value, int row, int column)
+void Solver::cancelRegion(int value, int row, int column)
 {
-	int boxRow = row - (row % BOX_SIZE);
-	int boxCol = column - (column % BOX_SIZE);
+	int regionRow = row - (row % BOX_SIZE);
+	int regionCol = column - (column % BOX_SIZE);
 
-	for (int curRow = boxRow; curRow < boxRow + BOX_SIZE; curRow++)
+	for (int curRow = regionRow; curRow < regionRow + BOX_SIZE; curRow++)
 	{
-		for (int curCol = boxCol; curCol < boxCol + BOX_SIZE; curCol++)
+		for (int curCol = regionCol; curCol < regionCol + BOX_SIZE; curCol++)
 		{
 			if (curCol == column && curRow == row)
 				continue;
@@ -241,39 +250,39 @@ void Solver::cancelBox(int value, int row, int column)
 
 /*
 	performSolve performs a series of checks that go above simple cross-hatching (eliminating candidate values by checking 
-	the values of interesecting rows/columns and values within the box itself) to generate new solutions for the puzzle.
+	the values of interesecting rows/columns and values within the region itself) to generate new solutions for the puzzle.
 
 	These methods are:
-		- Box line reduction
+		- Region line reduction
 			- A form of intersection removal in which candidates which must belong to 
-			  a line can be ruled out as candidates in a block (or box) that intersects the line in question.
+			  a line can be ruled out as candidates in a block (or region) that intersects the line in question.
 
 		- row union / column union
 			- This checks if any particular candidate value in a Tile is the not found in the union of the candidate
 			  values of the other tiles corresponding to that tiles row or column. This indicates that it is the 
 			  only candidate Tile for the value for that row/column
-			- Same as box line reduction except for column & row
+			- Same as region line reduction except for column & row
 
 		- check unsolved cancel
-			- Checks to see if a cancellation can be made by seeing that a candidate value appears in only one row or column in a specific box, 
-			  therefore the value can be removed as a candidate value from all other boxes in the specified row or column
+			- Checks to see if a cancellation can be made by seeing that a candidate value appears in only one row or column in a specific region, 
+			  therefore the value can be removed as a candidate value from all other regiones in the specified row or column
 
 		- IN PROGRESS FUNCTIONS:
 		- X wing cancel refers to the instance where a candidate value can be found in one of two rows (or columns)
-			- in two adjacent boxes, and the same candidate value can be found in 2 or 3 squares of the 3rd adjacent box.
-			  this indicates that the candidate MUST appear in the two columns of the first two boxes, and can be cancelled
-			  from the 3rd box in these two columns:
-			  Example: (-'s indicate an ignored box, 3's are considered to be candidates in an unsolved box)
+			- in two adjacent regiones, and the same candidate value can be found in 2 or 3 squares of the 3rd adjacent region.
+			  this indicates that the candidate MUST appear in the two columns of the first two regiones, and can be cancelled
+			  from the 3rd region in these two columns:
+			  Example: (-'s indicate an ignored region, 3's are considered to be candidates in an unsolved region)
 			  
-			  Box:	1				2				3
+			  Region:	1				2				3
 			  3	-	-	|	-	-	3	|	-	-	3 <- these two 3s can be cancelled
-			  -	-	3	|	-	-	3	|	-	-	3 <- because the 3 must belong in row 1 & 2 for box 1 & 2
+			  -	-	3	|	-	-	3	|	-	-	3 <- because the 3 must belong in row 1 & 2 for region 1 & 2
 			  -	-	-	|	-	-	-	|	-	-	3 <- 3 must go in this tile
 
 		- Naked tuple cancel
 			- when a tuple of tiles contains the same "tuple" candidate solutions)
 				for example if 3 tiles share the candidate values 1, 3, 7, then 1, 3, and 7 must belong to those tiles.. cancel
-				1, 3, and 7 from row OR column OR box, depending where the tuple was found.
+				1, 3, and 7 from row OR column OR region, depending where the tuple was found.
 
 		- Hidden tuple cancel
 			- when a tuple of tiles contains the same "tuple" candidate solutions but also have additional values present.
@@ -299,7 +308,8 @@ bool Solver::performSolve()
 		
 			if (isOpenTile(tileValue) && candidateSize > 1)
 			{
-				foundSolution = checkBoxLineReduction(row, column) || foundSolution;
+				
+				foundSolution = checkRegionLineReduction(row, column) || foundSolution;
 				foundSolution = checkRowUnion(row, column) || foundSolution;
 
 				foundSolution = checkColumnUnion(row, column) || foundSolution;
@@ -314,7 +324,7 @@ bool Solver::performSolve()
 				//foundSolution = checkHiddenTuple(row, column);
 			}
 
-			//checked once per box, as checkPointedTuple will find all pointed tuples in a box on call
+			//checked once per region, as checkPointedTuple will find all pointed tuples in a region on call
 			if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
 				foundSolution = checkPointedTuple(row, column) || foundSolution;
 		}
@@ -324,32 +334,32 @@ bool Solver::performSolve()
 }
 
 /*
-	checkBoxLineReduction performs a "Box line reduction" cancellation of a specific tile.
-	A box line reduction is defined as: "A form of intersection removal in which candidates which must belong to
-	a line can be ruled out as candidates in a block (or box) that intersects the line in question."
+	checkRegionLineReduction performs a "Region line reduction" cancellation of a specific tile.
+	A region line reduction is defined as: "A form of intersection removal in which candidates which must belong to
+	a line can be ruled out as candidates in a block (or region) that intersects the line in question."
 
-	checkBoxLineReduction is performed by generating a union of all candidate values of the other tiles within the same
+	checkRegionLineReduction is performed by generating a union of all candidate values of the other tiles within the same
 	square as the tile being checked. Then the candidate values of the tile being checked are checked against the union
-	of the other tiles. If a candidate value is not found to be in the union, a box line reduction has been detected,
+	of the other tiles. If a candidate value is not found to be in the union, a region line reduction has been detected,
 	solve the tile.
 
 	Inputs: (int) row - row of tile being checked
 	(int) column - column of tile being checked
 
-	Returns: (bool) foundSolution - indicates if a tile has been solved as a result of checkBoxLineReduction or not
+	Returns: (bool) foundSolution - indicates if a tile has been solved as a result of checkRegionLineReduction or not
 */
-bool Solver::checkBoxLineReduction(int row, int column)
+bool Solver::checkRegionLineReduction(int row, int column)
 {
-	int boxRow = row - (row % BOX_SIZE);
-	int boxCol = column - (column % BOX_SIZE);
+	int regionRow = row - (row % BOX_SIZE);
+	int regionCol = column - (column % BOX_SIZE);
 	unordered_set<int> candidateUnion;
 	Tile otherTile,
 		tile = this->board->getTile(row, column);
 	bool foundSolution = false;
 
-	for (int r = boxRow; r < boxRow + BOX_SIZE; r++)
+	for (int r = regionRow; r < regionRow + BOX_SIZE; r++)
 	{
-		for (int c = boxCol; c < boxCol + BOX_SIZE; c++)
+		for (int c = regionCol; c < regionCol + BOX_SIZE; c++)
 		{
 			if (c == column && r == row)
 				continue;
@@ -452,19 +462,19 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 
 
 /*
-	checkPointedTuple checks to see if a box contains a value that appears only in one row or column of a box. 
-	If it does, then the value must belong in that row or column of that box and can be used to cancel this 
+	checkPointedTuple checks to see if a region contains a value that appears only in one row or column of a region. 
+	If it does, then the value must belong in that row or column of that region and can be used to cancel this 
 	candidate value from the rest of the row or column. 
 
 	Method:
-		- Create a mapping of { row:	all candidate values for this row of a particular box }
-						and	  { column: all candidate values for this column of particular box }
+		- Create a mapping of { row:	all candidate values for this row of a particular region }
+						and	  { column: all candidate values for this column of particular region }
 		- check each value in each mapping to see if appears in the other row candidate values.
-		- if the value does not belong to the other mappings, it *must* be found in this row or column of this box 
-		- cancel the particular value from all other tiles in same row or column of the other boxes
+		- if the value does not belong to the other mappings, it *must* be found in this row or column of this region 
+		- cancel the particular value from all other tiles in same row or column of the other regiones
 	
-	inputs: (int) curRow - the row of the box we are checking
-			(int) curCol - the column of the box we are checking
+	inputs: (int) curRow - the row of the region we are checking
+			(int) curCol - the column of the region we are checking
 
 	outputs: (bool) foundSolution - indicates if we found a cancellation or not
 */
@@ -475,27 +485,27 @@ bool Solver::checkPointedTuple(int curRow, int curCol)
 
 	unordered_map<int, unordered_set<int>> rowCandidates;
 	unordered_map<int, unordered_set<int>> colCandidates;
-	//find start of box row
-	int boxRow = curRow - (curRow % BOX_SIZE);
-	//find start of box column
-	int boxCol = curCol - (curCol % BOX_SIZE);
+	//find start of region row
+	int regionRow = curRow - (curRow % BOX_SIZE);
+	//find start of region column
+	int regionCol = curCol - (curCol % BOX_SIZE);
 	bool performedCancellation = false;
 
 
-	for (int curBoxRow = boxRow; curBoxRow < boxRow + BOX_SIZE; curBoxRow++)
+	for (int curRegionRow = regionRow; curRegionRow < regionRow + BOX_SIZE; curRegionRow++)
 	{
-		for (int curBoxCol = boxCol; curBoxCol < boxCol + BOX_SIZE; curBoxCol++)
+		for (int curRegionCol = regionCol; curRegionCol < regionCol + BOX_SIZE; curRegionCol++)
 		{
 			// for each candidate value in this tile add it to the corresponding row/column set of candidate values
-			for (auto candidate : this->board->getTile(curBoxRow, curBoxCol).getCandidateValues())
+			for (auto candidate : this->board->getTile(curRegionRow, curRegionCol).getCandidateValues())
 			{
-				rowCandidates[curBoxRow].insert(candidate);
-				colCandidates[curBoxCol].insert(candidate);
+				rowCandidates[curRegionRow].insert(candidate);
+				colCandidates[curRegionCol].insert(candidate);
 			}
 		}
 	}
 
-	//check to see if the rows of the box or the columns of a box have a unique value in a particular column or row
+	//check to see if the rows of the region or the columns of a region have a unique value in a particular column or row
 	//and set cancellation flag based on this
 	performedCancellation = checkSetsContainsUnique(&rowCandidates, curRow, curCol, "row")
 		|| checkSetsContainsUnique(&colCandidates, curRow, curCol, "column");
@@ -545,9 +555,9 @@ bool Solver::checkSetsContainsUnique(const unordered_map<int, unordered_set<int>
 			if (notInOtherSets)
 			{
 				if (type == "row")
-					performedCancellation = cancelRowSkipSameBox(candidate, keyValue.first, curCol) || performedCancellation;
+					performedCancellation = cancelRowSkipSameRegion(candidate, keyValue.first, curCol) || performedCancellation;
 				else if (type == "column") {
-					performedCancellation = cancelColumnSkipSameBox(candidate, curRow, keyValue.first) || performedCancellation;
+					performedCancellation = cancelColumnSkipSameRegion(candidate, curRow, keyValue.first) || performedCancellation;
 				}
 			}
 		}
@@ -574,14 +584,14 @@ bool Solver::checkUnsolvedCancel(int currRow, int currColumn)
 	Tile currTile = this->board->getTile(currRow, currColumn);
 	for (auto candidate : currTile.getCandidateValues())
 	{
-		int rowOrCol = checkForValueInBox(candidate, currRow, currColumn);
+		int rowOrCol = checkForValueInRegion(candidate, currRow, currColumn);
 		switch(rowOrCol)	
 		{
 			case 0:
-				foundSolution = cancelRowSkipSameBox(candidate, currRow, currColumn) || foundSolution;
+				foundSolution = cancelRowSkipSameRegion(candidate, currRow, currColumn) || foundSolution;
 				break;
 			case 1:
-				foundSolution = cancelColumnSkipSameBox(candidate, currRow, currColumn) || foundSolution;
+				foundSolution = cancelColumnSkipSameRegion(candidate, currRow, currColumn) || foundSolution;
 				break;
 			default:
 				break;
@@ -596,20 +606,20 @@ Hacky being
 2. initializing the otherTile, otherTileActualValue and candidateValuesOfOtherTile in the loops.
 	Although I think its hacky it seems neccessary to make it work not sure why.
 */
-int Solver::checkForValueInBox(int currCandidate, int currRow, int currColumn)
+int Solver::checkForValueInRegion(int currCandidate, int currRow, int currColumn)
 {
 	int inRowFlag = 0;
 	int inColumnFlag = 1;
-	int inBoxFlag = -1;
+	int inRegionFlag = -1;
 
 	int validCancelFlag = -1;
 	int inRowCounter = 0, inColumnCounter = 0;
-	int boxRow = currRow - (currRow % BOX_SIZE);
-	int boxCol = currColumn - (currColumn % BOX_SIZE);
+	int regionRow = currRow - (currRow % BOX_SIZE);
+	int regionCol = currColumn - (currColumn % BOX_SIZE);
 
-	for (int row = boxRow; row < boxRow + BOX_SIZE; row++)
+	for (int row = regionRow; row < regionRow + BOX_SIZE; row++)
 	{
-		for (int col = boxCol; col < boxCol + BOX_SIZE; col++)
+		for (int col = regionCol; col < regionCol + BOX_SIZE; col++)
 		{
 			Tile otherTile = this->board->getTile(row, col);
 			int otherTileActualValue = otherTile.getActualValue();
@@ -627,7 +637,7 @@ int Solver::checkForValueInBox(int currCandidate, int currRow, int currColumn)
 						inRowCounter++;
 					else
 					{
-						validCancelFlag = inBoxFlag;
+						validCancelFlag = inRegionFlag;
 						return validCancelFlag;
 					}
 				}
@@ -643,16 +653,22 @@ int Solver::checkForValueInBox(int currCandidate, int currRow, int currColumn)
 
 	return validCancelFlag;
 }
+/*
+cancelRowSkipSameRegion cancels a candidate value from the column, but skips the region for which the tile belongs
 
-bool Solver::cancelRowSkipSameBox(int candidateValue, int currRow, int currColumn)
+inputs : (int)candidateValue - the value to cancel from the column
+		 (int) currRow - the row of the tile region to skip
+		 (int) currColumn - the column of the tile region to skip
+*/
+bool Solver::cancelRowSkipSameRegion(int candidateValue, int currRow, int currColumn)
 {
-	int boxCol = currColumn - (currColumn % BOX_SIZE);
+	int regionCol = currColumn - (currColumn % BOX_SIZE);
 	bool removedValue = false;
 
 	for (int col = 0; col < BOARD_SIZE; col++)
 
 	{
-		if (col >= boxCol && col < boxCol + BOX_SIZE)//isInBoxRow(boxCol, col))
+		if (col >= regionCol && col < regionCol + BOX_SIZE)//isInRegionRow(regionCol, col))
 			continue;
 		else
 		{
@@ -665,14 +681,21 @@ bool Solver::cancelRowSkipSameBox(int candidateValue, int currRow, int currColum
 	return removedValue;
 }
 
-bool Solver::cancelColumnSkipSameBox(int candidateValue, int currRow, int currColumn)
+/*
+	cancelColumnSkipSameRegion cancels a candidate value from the column, but skips the region for which the tile belongs
+
+	inputs: (int) candidateValue - the value to cancel from the column
+			(int) currRow - the row of the tile region to skip
+			(int) currColumn - the column of the tile region to skip
+*/
+bool Solver::cancelColumnSkipSameRegion(int candidateValue, int currRow, int currColumn)
 {
-	int boxRow = currRow - (currRow % BOX_SIZE);
+	int regionRow = currRow - (currRow % BOX_SIZE);
 	bool removedValue = false;
 
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
-		if (row >= boxRow && row < boxRow + BOX_SIZE)
+		if (row >= regionRow && row < regionRow + BOX_SIZE)
 			continue;
 		else
 		{
@@ -701,7 +724,7 @@ bool Solver::checkForValueMissing(unordered_set<int> candidateUnionValues, Tile 
 	if (tile.getCandidateValues().size() > 1) {
 		for (auto candidate : tile.getCandidateValues())
 		{
-			if (setContains(candidateUnionValues, candidate))
+			if (!setContains(candidateUnionValues, candidate))
 			{
 				this->board->clearTileCandidateValues(tile.getRow(), tile.getColumn());
 				this->board->addTileCandidateValue(candidate, tile.getRow(), tile.getColumn());
