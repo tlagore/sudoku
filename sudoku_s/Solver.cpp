@@ -138,19 +138,13 @@ void Solver::solveTile(Tile tile) {
 	if (tile.getCandidateValues().size() == 1) {
 
 		
-		if (tile.getRow() == 7 && tile.getColumn() == 8)
-			printf("here");
 		int value = *tile.getCandidateValues().begin();
 		int row = tile.getRow();
 		int col = tile.getColumn();
 
-		printf("row: %d  col: %d value: %d\n", tile.getRow(), tile.getColumn(), value);
-		board->printCandidateValues();
-
 		this->board->setTileActualValue(value, row, col);
 		this->numSolved++;
 
-		board->printBoard();
 
 		cancelRow(value, row, col);
 		cancelColumn(value, row, col);
