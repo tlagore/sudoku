@@ -77,6 +77,9 @@ int Tile::getActualValue()
 	return actualValue;
 }
 
+/*
+	setActualValue sets the actual value of the tile to the specified value and clears it's candidate list
+*/
 void Tile::setActualValue(int value) 
 {
 	if (value >= 1 && value <= 9)

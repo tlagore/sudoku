@@ -50,7 +50,6 @@ private:
 	bool cancelRowSkipSameBox(int candidateValue, int currRow, int currColumn);
 	bool cancelColumnSkipSameBox(int candidateValue, int currRow, int currColumn);
 	int checkForValueInBox(int currCandidate, int currRow, int currColumn);
-	bool isInCandidateValues(unordered_set<int> candidateValues, int candidate);
 	bool checkForValueMissing(unordered_set<int> candidateUnionValues, Tile tile);
 	bool isOpenTile(int value);
 	bool checkBoxLineReduction(int row, int column);

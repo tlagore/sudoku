@@ -121,18 +121,32 @@ void Solver::removeBoxValues(int row, int column, unordered_set<int>* candidateV
 	}
 }
 
+/*
+	solveTile takes in a specified tile and solves the tile.
+	
+	It checks to ensure that the tile has only one candidate value, then sets the value to its only candidate value.
 
+	It then cancels in the row, column, and box for which the tile belongs, removing all candidate values that are equal 
+	to the value set in this tile.
+
+	Inputs: (Tile) tile - the tile for which the actual value is being set
+	Outputs: None
+*/
 void Solver::solveTile(Tile tile) {
-	int value = *tile.getCandidateValues().begin();
-	int row = tile.getRow();
-	int col = tile.getColumn();
+	// ensure we are being asked to solve a tile that has only one candidate value
 
-	this->board->setTileActualValue(value, row, col);
-	this->numSolved++;
+	if (tile.getCandidateValues().size() == 1) {
+		int value = *tile.getCandidateValues().begin();
+		int row = tile.getRow();
+		int col = tile.getColumn();
 
-	cancelRow(value, row, col);
-	cancelColumn(value, row, col);
-	cancelBox(value, row, col);
+		this->board->setTileActualValue(value, row, col);
+		this->numSolved++;
+
+		cancelRow(value, row, col);
+		cancelColumn(value, row, col);
+		cancelBox(value, row, col);
+	}
 }
 
 /*
@@ -243,6 +257,33 @@ void Solver::cancelBox(int value, int row, int column)
 		- check unsolved cancel
 			- Checks to see if a cancellation can be made by seeing that a candidate value appears in only one row or column in a specific box, 
 			  therefore the value can be removed as a candidate value from all other boxes in the specified row or column
+
+		- IN PROGRESS FUNCTIONS:
+		- X wing cancel refers to the instance where a candidate value can be found in one of two rows (or columns)
+			- in two adjacent boxes, and the same candidate value can be found in 2 or 3 squares of the 3rd adjacent box.
+			  this indicates that the candidate MUST appear in the two columns of the first two boxes, and can be cancelled
+			  from the 3rd box in these two columns:
+			  Example: (-'s indicate an ignored box, 3's are considered to be candidates in an unsolved box)
+			  
+			  Box:	1				2				3
+			  3	-	-	|	-	-	3	|	-	-	3 <- these two 3s can be cancelled
+			  -	-	3	|	-	-	3	|	-	-	3 <- because the 3 must belong in row 1 & 2 for box 1 & 2
+			  -	-	-	|	-	-	-	|	-	-	3 <- 3 must go in this tile
+
+		- Naked tuple cancel
+			- when a tuple of tiles contains the same "tuple" candidate solutions)
+				for example if 3 tiles share the candidate values 1, 3, 7, then 1, 3, and 7 must belong to those tiles.. cancel
+				1, 3, and 7 from row OR column OR box, depending where the tuple was found.
+
+		- Hidden tuple cancel
+			- when a tuple of tiles contains the same "tuple" candidate solutions but also have additional values present.
+				This is a much harder check, if 4 and 5 are only found in 2 tiles, but have many other "candidates", 4 and 5 must 
+				belong to these two tiles, cancel all possible other values in these 2 tiles except for 4 and 5.
+				can also be extended to a larger tuple.
+
+		Inputs: None
+		Outputs: (bool) foundSolution - indicates whether or not the puzzle has been progressed via the call to performSolve
+					if there is no progression on a call to performSolve, our algorithm is insufficient to solve the puzzle
 */
 bool Solver::performSolve() 
 {
@@ -266,19 +307,14 @@ bool Solver::performSolve()
 				//TODO: implement check for XWingCancel
 				//foundSolution = checkXWingCancel(row, column);
 
-				//TODO: implement check for Naked tuple (when a tuple of tiles contains the same "tuple" candidate solutions)
-				// for example if 3 tiles share the candidate values 1, 3, 7, then 1, 3, and 7 must belong to those tiles.. cancel
-				// 1, 3, and 7 from row OR column OR box, depending where the tuple was found.
+				//TODO: implement check for Naked tuple
 				//foundSolution = checkNakedTuple(row, column);
 
-				//TODO: implement check for Check Hidden Tuple (when a tuple of tiles contains the same "tuple" candidate solutions
-				// but also have additional values present).
-				// This is a much harder check, if 4 and 5 are only found in 2 tiles, but have many other "candidates", 4 and 5 must 
-				// belong to these two tiles, cancel all possible other values in these 2 tiles except for 4 and 5.
-				// can also be extended to a larger tuple.
+				//TODO: implement check for Check Hidden Tuple
 				//foundSolution = checkHiddenTuple(row, column);
 			}
-			//checked once per box, as checkUnsolvedCancel will find all 
+
+			//checked once per box, as checkPointedTuple will find all pointed tuples in a box on call
 			if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
 				foundSolution = checkPointedTuple(row, column) || foundSolution;
 		}
@@ -416,15 +452,21 @@ bool Solver::checkColumnUnion(int currRow, int currColumn)
 
 
 /*
-	Attempt #2 at checkUnsolvedCancel
+	checkPointedTuple checks to see if a box contains a value that appears only in one row or column of a box. 
+	If it does, then the value must belong in that row or column of that box and can be used to cancel this 
+	candidate value from the rest of the row or column. 
 
-	Idea:
-		- Create a mapping of row: all candidate values for a particular box.
+	Method:
+		- Create a mapping of { row:	all candidate values for this row of a particular box }
+						and	  { column: all candidate values for this column of particular box }
 		- check each value in each mapping to see if appears in the other row candidate values.
-		- if the value does not belong to the other mappings, it *must* be found in this row of this box 
-		- cancel the particular value from all other tiles in same row the other boxes
+		- if the value does not belong to the other mappings, it *must* be found in this row or column of this box 
+		- cancel the particular value from all other tiles in same row or column of the other boxes
 	
-	AND YEAH I USED 1 R IN CUR. GIT SUM.	
+	inputs: (int) curRow - the row of the box we are checking
+			(int) curCol - the column of the box we are checking
+
+	outputs: (bool) foundSolution - indicates if we found a cancellation or not
 */
 
 bool Solver::checkPointedTuple(int curRow, int curCol)
@@ -575,7 +617,7 @@ int Solver::checkForValueInBox(int currCandidate, int currRow, int currColumn)
 
 			if (isOpenTile(otherTileActualValue))
 			{
-				if (isInCandidateValues(candidateValuesOfOtherTile, currCandidate))
+				if (setContains(candidateValuesOfOtherTile, currCandidate))
 				{
 					if (col == currColumn && row == currRow)
 						continue;
@@ -600,11 +642,6 @@ int Solver::checkForValueInBox(int currCandidate, int currRow, int currColumn)
 		validCancelFlag = inRowFlag;
 
 	return validCancelFlag;
-}
-
-bool Solver::isInCandidateValues(unordered_set<int> candidateValues, int candidate)
-{
-	return (candidateValues.find(candidate) != candidateValues.end());
 }
 
 bool Solver::cancelRowSkipSameBox(int candidateValue, int currRow, int currColumn)
@@ -647,17 +684,28 @@ bool Solver::cancelColumnSkipSameBox(int candidateValue, int currRow, int currCo
 	return removedValue;
 }
 
+/*
+	checkForValueMissing checks to see if the supplied tile maintains a candidate value that does not appear in the 
+		supplied set.
+
+	If the value is missing, the tile is solved for this value.
+
+	Inputs: (unordered_set<int>) candidateValues - a set of candidate values
+			(Tile) tile - the tile for which we are comparing candidate Values
+
+	Outputs: (bool) true if the tile contained a value that was missing from the list
+					false if the tile did not contain a value that was missing from the list
+*/
 bool Solver::checkForValueMissing(unordered_set<int> candidateUnionValues, Tile tile)
 {
 	if (tile.getCandidateValues().size() > 1) {
 		for (auto candidate : tile.getCandidateValues())
 		{
-			if (candidateUnionValues.find(candidate) == candidateUnionValues.end())
+			if (setContains(candidateUnionValues, candidate))
 			{
 				this->board->clearTileCandidateValues(tile.getRow(), tile.getColumn());
 				this->board->addTileCandidateValue(candidate, tile.getRow(), tile.getColumn());
 				solveTile(this->board->getTile(tile.getRow(), tile.getColumn()));
-				//this->singleValueTiles.push_back(this->board->getTile(tile.getRow(), tile.getColumn()));
 				return true;
 			}
 		}
