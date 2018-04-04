@@ -272,8 +272,19 @@ bool Solver::performSolve()
 }
 
 /*
-	- A form of intersection removal in which candidates which must belong to
-	a line can be ruled out as candidates in a block (or box) that intersects the line in question.
+	checkBoxLineReduction performs a "Box line reduction" cancellation of a specific tile.
+	A box line reduction is defined as: "A form of intersection removal in which candidates which must belong to
+	a line can be ruled out as candidates in a block (or box) that intersects the line in question."
+
+	checkBoxLineReduction is performed by generating a union of all possible values of the other tiles within the same
+	square as the tile being checked. Then the possible values of the tile being checked are checked against the union
+	of the other tiles. If a possible value is not found to be in the union, a box line reduction has been detected,
+	solve the tile.
+
+	Inputs: (int) row - row of tile being checked
+	(int) column - column of tile being checked
+
+	Returns: (bool) foundSolution - indicates if a tile has been solved as a result of checkBoxLineReduction or not
 */
 bool Solver::checkBoxLineReduction(int row, int column)
 {
@@ -308,6 +319,17 @@ bool Solver::checkBoxLineReduction(int row, int column)
 	return foundSolution;
 }
 
+/*
+checkRowUnion checks an indivdual tile's possible values against the union of the rest of the row's possible values
+
+If a possible value of a tile is not found to be in the union of the rest of the row, it is the only place that a value
+can go. Solve it.
+
+Inputs: (int) row - row of tile being checked
+		(int) column - column of tile being checked
+
+Returns: (bool) foundSolution - indicates if a tile has been solved as a result of checkRowUnion or not
+*/
 bool Solver::checkRowUnion(int currRow, int currColumn)
 {
 	bool foundSolution = false;
@@ -336,6 +358,18 @@ bool Solver::checkRowUnion(int currRow, int currColumn)
 	return foundSolution;
 }
 
+
+/*
+	checkColumnUnion checks an indivdual tiles possible values against the union of the rest of the column's possible values
+
+	If a possible value of a tile is not found to be in the union of the rest of the column, it is the only place that a value 
+	can go. Solve it.
+
+	Inputs: (int) row - row of tile being checked
+			(int) column - column of tile being checked
+
+	Returns: (bool) foundSolution - indicates if a tile has been solved as a result of checkColumnUnion or not
+*/
 bool Solver::checkColumnUnion(int currRow, int currColumn)
 {
 	bool foundSolution = false;
