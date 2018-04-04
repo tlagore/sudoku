@@ -3,9 +3,16 @@
 
 #include <unordered_set>
 #define MAX_SUDOKU_VALUE 9
+#define MIN_SUDOKU_VALUE 1
 
 using namespace std;
 
+/*
+	Tile maintains the information of a single tile for the sudoku board.
+
+	@author Tyrone Lagore & Johnny Simmonds
+	@version 4/4/2018
+*/
 class Tile
 {
 public:

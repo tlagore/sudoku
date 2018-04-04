@@ -78,6 +78,10 @@ void Solver::removeRowValues(int row, int column, unordered_set<int>*candidateVa
 /*
 	Removes column values as candidate solutions to a tile by iterating through each row for the row, skipping its own Tile,
 	If a value is encountered is in the supplied candidateValue unordered_set, then it is removed as a candidate value
+
+	Inputs: (int) row - row for the tile being checked
+			(int) column - column for the tile being checked
+			(unordered_set<int>*) candidateValues - current possible candidates for this tile
 */
 void Solver::removeColValues(int row, int column, unordered_set<int>* candidateValues)
 {
@@ -89,6 +93,7 @@ void Solver::removeColValues(int row, int column, unordered_set<int>* candidateV
 			continue;
 
 		curValue = board->getTile(r, column).getActualValue();
+		//if value is found in column that is currently in candidate list, remove from candidates
 		if (candidateValues->find(curValue) != candidateValues->end()) {
 			candidateValues->erase(curValue);
 		}
@@ -98,6 +103,12 @@ void Solver::removeColValues(int row, int column, unordered_set<int>* candidateV
 /*
 	Removes region values as candidate solutions to a tile by iterating through the region that the tile belongs to,
 	If a value is encountered is in the supplied candidateValue unordered_set, then it is removed as a candidate value
+
+	Inputs: (int) row - row for the tile being checked
+			(int) column - column for the tile being checked
+			(unordered_set<int>*) candidateValues - current possible candidates for this tile
+
+	Outputs: None
 */
 void Solver::removeRegionValues(int row, int column, unordered_set<int>* candidateValues)
 {
@@ -262,16 +273,36 @@ void Solver::cancelRegion(int value, int row, int column)
 			  therefore the value can be removed as a candidate value from all other regiones in the specified row or column
 
 		- IN PROGRESS FUNCTIONS:
-		- X wing cancel refers to the instance where a candidate value can be found in one of two rows (or columns)
-			- in two adjacent regiones, and the same candidate value can be found in 2 or 3 squares of the 3rd adjacent region.
+		- X wing cancel 
+			- refers to the instance where a candidate value can be found in one of two rows (or columns)
+			  in two adjacent regiones, and the same candidate value can be found in 2 or 3 squares of the 3rd adjacent region.
 			  this indicates that the candidate MUST appear in the two columns of the first two regiones, and can be cancelled
 			  from the 3rd region in these two columns:
 			  Example: (-'s indicate an ignored region, 3's are considered to be candidates in an unsolved region)
 			  
 			  Region:	1				2				3
-			  3	-	-	|	-	-	3	|	-	-	3 <- these two 3s can be cancelled
-			  -	-	3	|	-	-	3	|	-	-	3 <- because the 3 must belong in row 1 & 2 for region 1 & 2
-			  -	-	-	|	-	-	-	|	-	-	3 <- 3 must go in this tile
+					3	-	-	|	-	-	3	|	-	-	3 <- these two 3s can be cancelled
+					-	-	3	|	-	-	3	|	-	-	3 <- because the 3 must belong in row 1 & 2 for region 1 & 2
+					-	-	-	|	-	-	-	|	-	-	3 <- 3 must go in this tile
+
+		- Y wing cancel
+			- Occurs when a Tile (the pivot) has exactly 2 values and is intersected by two conjugate pair Tiles. These are called pincers
+				(definition: conjugate pair): a tile that contains a candidate that must go in one of the two tiles
+				
+				If these two intersecting Tiles share a value, that value can be eliminated from THEIR intersection.
+				Example:
+
+			Region    
+					0	  1		 2     3  	4   5 
+			0	  (2,1)	  4	     5   | 8  (3,2) 9
+			1		6   (3,1)  (8,9) | 5  (2,3) 7
+			2	(7,8,9)(7,8,9)(7,8,9)| 1    6   4
+
+				(0,0) is the pivot, having pincers at (1,1), and (0, 4). Notice they share a conjugate pair value.
+				In the case of (1,1), (1) is shared with (0,0). in the case of (0,4), (2), is shared with (0,0).
+
+				The shared value between (1,1) and (0,4) is (3), which can then be removed from their intersection (1,4)
+				solving the square to (2).
 
 		- Naked tuple cancel
 			- when a tuple of tiles contains the same "tuple" candidate solutions)
@@ -310,6 +341,10 @@ bool Solver::performSolve()
 
 				//TODO: implement check for XWingCancel
 				//foundSolution = checkXWingCancel(row, column);
+
+				//TODO: implement check for YWingCancel
+				//if (candidateSize == 2)
+					//foundSolution = checkXWingCancel(row, column);
 
 				//TODO: implement check for Naked tuple
 				//foundSolution = checkNakedTuple(row, column);
