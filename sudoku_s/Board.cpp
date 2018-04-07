@@ -84,19 +84,24 @@ void Board::clearTileCandidateValues(int row, int col)
 
 bool Board::isValidState()
 {
-
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
 		for (int column = 0; column < BOARD_SIZE; column++)
 		{
-			if (!isValidRow(*(board[row][column])))
+			if (!isValidRow(*(board[row][column]))) {
+				printf("Bad row, row: %d col: %d\n", row, column);
 				return false;
+			}
 
-			if (!isValidColumn(*(board[row][column])))
+			if (!isValidColumn(*(board[row][column]))) {
+				printf("Bad column, row: %d col: %d\n", row, column);
 				return false;
+			}
 				
-			if (!isValidBox(*(board[row][column])))
+			if (!isValidBox(*(board[row][column]))) {
+				printf("Bad box, row: %d col: %d\n", row, column);
 				return false;
+			}
 		}
 	}
 	return true;
