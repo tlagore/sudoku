@@ -4,6 +4,8 @@
 #include "Board.h"
 
 #define DEFAULT_ITERATIONS 100
+#define REMOVE_SKIP_CAP 25
+#define EARLY_STAGE_REMOVAL 35
 
 class PuzzleMaker
 {

@@ -99,6 +99,7 @@ void PuzzleMaker::removeTiles(Board * board, Difficulty difficulty)
 	int limit = DIFFICULTY_LIMT[difficulty];
 	bool removedElement;
 	int attemptedRemoveValue;
+	int numSkipped;
 	Solver solver;
 
 	std::uniform_int_distribution<int> fifty_fifty(0, 1);
@@ -106,6 +107,7 @@ void PuzzleMaker::removeTiles(Board * board, Difficulty difficulty)
 	do
 	{
 		removedElement = false;
+		numSkipped = 0;
 
 		for (int row = 0; row < BOARD_SIZE; row++)
 		{
@@ -113,10 +115,13 @@ void PuzzleMaker::removeTiles(Board * board, Difficulty difficulty)
 			{
 				if (board->getTile(row, column).getActualValue() != UNSOLVED) {
 					//if we're relatively early in the removal process, randomize if we actually attempt to remove 
-					//the tile or not
-					if (limit > 35)
-						if (fifty_fifty(this->_generator) == 0)
+					//the tile or not. Don't skip if we've skipped more than skip cap and haven't removed an element yet
+					if (limit > EARLY_STAGE_REMOVAL && (numSkipped < REMOVE_SKIP_CAP || removedElement)) {
+						if (fifty_fifty(this->_generator) == 0) {
+							numSkipped++;
 							continue;
+						}
+					}
 
 					//preserve tile value that we attempt to remove
 					attemptedRemoveValue = board->getTile(row, column).getActualValue();
