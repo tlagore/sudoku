@@ -7,7 +7,7 @@ Solver::Solver()
 
 Solver::Solver(Board *board)
 {
-	this->board = board;
+	this->board = new Board(*board);
 	this->numSolved = 0;
 }
 

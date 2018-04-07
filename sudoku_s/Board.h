@@ -15,6 +15,7 @@ public:
 	Board(int inputForNewBoard[BOARD_SIZE][BOARD_SIZE]);
 	~Board();
 	Tile getTile(int row, int column);
+	void removeTile(int row, int column);
 	void setTileActualValue(int value, int row, int column);
 	void setTileCandidateValues(int row, int col, unordered_set<int>);
 	void addTileCandidateValue(int value, int row, int col);

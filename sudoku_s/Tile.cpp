@@ -90,7 +90,7 @@ int Tile::getActualValue()
 */
 void Tile::setActualValue(int value) 
 {
-	if (value >= MIN_SUDOKU_VALUE && value <= MAX_SUDOKU_VALUE)
+	if ((value >= MIN_SUDOKU_VALUE && value <= MAX_SUDOKU_VALUE) || value == UNSOLVED)
 	{
 		this->actualValue = value;
 		this->candidateValues.clear();

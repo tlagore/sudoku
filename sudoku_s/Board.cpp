@@ -55,6 +55,11 @@ Tile Board::getTile(int row, int column)
 	return *(board[row][column]);
 }
 
+void Board::removeTile(int row, int column) 
+{
+	board[row][column]->setActualValue(-1);
+}
+
 void Board::setTileActualValue(int value, int row, int column)
 {
 	if (board[row][column]->getActualValue() == -1)

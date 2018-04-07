@@ -4,6 +4,7 @@
 #include <unordered_set>
 #define MAX_SUDOKU_VALUE 9
 #define MIN_SUDOKU_VALUE 1
+#define UNSOLVED -1
 
 using namespace std;
 
