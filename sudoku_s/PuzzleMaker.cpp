@@ -6,6 +6,9 @@
 #include "PuzzleMaker.h"
 
 
+/*
+	Default constructor, 
+*/
 PuzzleMaker::PuzzleMaker()
 {
 	//seed random generator based on time
@@ -13,21 +16,30 @@ PuzzleMaker::PuzzleMaker()
 	this->_generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
 }
 
+//overloaded constructor, takes in number of iterations to perform on the puzzle
 PuzzleMaker::PuzzleMaker(int iterations) : _iterations{ iterations }
 {
 	//seed random generator based on time
 	this->_generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
 }
 
+//copy constructor
 PuzzleMaker::PuzzleMaker(const PuzzleMaker & rhs) : _seed{rhs._seed}, _iterations{rhs._iterations}
 {
 }
 
+//overload constructor, takes in a specified seed and iterations
 PuzzleMaker::PuzzleMaker(int seed, int iterations) : _seed{ seed }, _iterations{ iterations }
 {
 }
 
+/*
+	generateBoard generates a randomized board based on a difficulty.
 
+	Currently, generateBoard simply returns the solved board.
+
+	TODO: Remove values based on the difficulty handed in.
+*/
 Board * PuzzleMaker::generateBoard(Difficulty diff)
 {
 	Board *board = nullptr;
@@ -63,6 +75,17 @@ Board * PuzzleMaker::generateBoard(Difficulty diff)
 	return board;
 }
 
+/*
+
+	jumblePuzzle takes in an array of values assumed to be a valid sudoku board.
+
+	The default supplied valid sudoku board is used as a starting point, then the 
+	method randomly swaps rows and columns within the same region based on the number of iterations provided
+	in the constructor (default of 100 iterations - which seems a bit low).
+
+	This takes advantage of the fact that for a valid sudoku board, swapping any row or column within the same region
+	will still result in a valid sudoku board.
+*/
 void PuzzleMaker::jumblePuzzle(int values[BOARD_SIZE][BOARD_SIZE]) 
 {	
 	int row_a = -1,
@@ -104,12 +127,15 @@ void PuzzleMaker::jumblePuzzle(int values[BOARD_SIZE][BOARD_SIZE])
 	}
 }
 
+/*
+	swapRow takes in two rows and an array of values and swaps the values of the two rows
+*/
 void PuzzleMaker::swapRow(int row_a, int row_b, int values[BOARD_SIZE][BOARD_SIZE]) 
 {
 	int temp;
 
-	//don't swap the same rows
-	if (row_a == row_b)
+	//don't swap the same rows && ensure rows are valid
+	if (row_a == row_b || (row_a < 0 || row_a > BOARD_SIZE) || (row_b < 0 || row_b > BOARD_SIZE))
 		return;
 
 	for (int i = 0; i < BOARD_SIZE; i++) {
@@ -119,12 +145,15 @@ void PuzzleMaker::swapRow(int row_a, int row_b, int values[BOARD_SIZE][BOARD_SIZ
 	}
 }
 
+/*
+	swapCol takes in two columns and an array of values and swaps the values of the two columns
+*/
 void PuzzleMaker::swapCol(int col_a, int col_b, int values[BOARD_SIZE][BOARD_SIZE])
 {
 	int temp;
 
-	//don't swap the same rows
-	if (col_a == col_b)
+	//don't swap the same columns & ensure columns are valid
+	if (col_a == col_b || (col_a < 0 || col_a > BOARD_SIZE) || (col_b < 0 || col_b > BOARD_SIZE))
 		return;
 
 	for (int i = 0; i < BOARD_SIZE; i++) {
