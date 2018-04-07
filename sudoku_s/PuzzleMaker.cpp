@@ -27,11 +27,13 @@ PuzzleMaker::PuzzleMaker(int iterations) : _iterations{ iterations }
 //copy constructor
 PuzzleMaker::PuzzleMaker(const PuzzleMaker & rhs) : _seed{rhs._seed}, _iterations{rhs._iterations}
 {
+	this->_generator.seed(_seed);
 }
 
 //overload constructor, takes in a specified seed and iterations
 PuzzleMaker::PuzzleMaker(int seed, int iterations) : _seed{ seed }, _iterations{ iterations }
 {
+	this->_generator.seed(_seed);
 }
 
 /*
