@@ -69,21 +69,31 @@ void PuzzleMaker::jumblePuzzle(int values[BOARD_SIZE][BOARD_SIZE])
 		row_b = -1,
 		col_a = -1,
 		col_b = -1;
-	std::uniform_int_distribution<int> distribution(0, BOARD_SIZE - 1);
+	int row_region = -1,
+		col_region = -1;
+	std::uniform_int_distribution<int> region_distribution(0, BOX_SIZE - 1);
+
+	//random generator for generating a 50/50 chacne
+	std::uniform_int_distribution<int> fifty_fifty(0, 1);
 
 	for (int i = 0; i < _iterations; i++)
 	{
-		row_a = distribution(this->_generator);
-		//spin till we find a different row than row_a
-		while ((row_b = distribution(this->_generator)) == row_a);
 
-		col_a = distribution(this->_generator);
+		//dont care if we're swapping the same row/col region
+		row_region = region_distribution(this->_generator);
+		col_region = region_distribution(this->_generator);
+
+		//(row_region * BOX_SIZE) gives us the start point of the actual region we've selected
+		row_a = (row_region * BOX_SIZE) + region_distribution(this->_generator);
+		//but spin till we find a different row than row_a
+		while ((row_b = (row_region * BOX_SIZE) + region_distribution(this->_generator)) == row_a);
+
+		col_a = (col_region * BOX_SIZE) + region_distribution(this->_generator);
 		//sping till we find different column than col_a
-		while ((col_b = distribution(this->_generator)) == col_a);
-
+		while ((col_b = (col_region * BOX_SIZE) + region_distribution(this->_generator)) == col_a);
 
 		//50 50 chance of swapping row before column vs column before row
-		if (distribution(this->_generator) % 2 == 0) {
+		if (fifty_fifty(this->_generator) == 0) {
 			swapRow(row_a, row_b, values);
 			swapCol(col_a, col_b, values);
 		}
