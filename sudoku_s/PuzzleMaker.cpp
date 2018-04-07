@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include "PuzzleMaker.h"
+#include "Solver.h"
 
 
 /*
@@ -68,8 +69,73 @@ Board * PuzzleMaker::generateBoard(Difficulty diff)
 		delete board;
 		board = nullptr;
 	}
+	else {
+		removeTiles(board, diff);
+	}
 
 	return board;
+}
+
+/*
+	removeTiles takes in a board and difficulty and randomly removes tiles.
+
+	The number of tiles removed is based on the difficulty.
+
+	removeTiles does not guarantee that the tiles removed will match the difficulty handed into the function,
+	but does guarantee that it will not remove MORE than the passed in difficulty.
+
+	Current difficulty is 
+		easy = remove (up to) 45 tiles
+		medium = remove (up to) 50 tiles
+		hard = remove (up to) 55 tiles
+
+	removeTiles will halt early if a full pass of the puzzle is done and no tile was able to be removed while keeping the puzzle
+	in a solvable state. This is limited by the Solver classes ability to solve sudokus
+*/
+void PuzzleMaker::removeTiles(Board * board, Difficulty difficulty)
+{
+	int limit = DIFFICULTY_LIMT[difficulty];
+	bool removedElement;
+	int attemptedRemoveValue;
+	Solver solver;
+
+	std::uniform_int_distribution<int> fifty_fifty(0, 1);
+		
+	do
+	{
+		removedElement = false;
+
+		for (int row = 0; row < BOARD_SIZE; row++)
+		{
+			for (int column = 0; column < BOARD_SIZE; column++)
+			{
+				if (board->getTile(row, column).getActualValue() != UNSOLVED) {
+					//if we're relatively early in the removal process, randomize if we actually attempt to remove 
+					//the tile or not
+					if (limit > 35)
+						if (fifty_fifty(this->_generator) == 0)
+							continue;
+
+					//preserve tile value that we attempt to remove
+					attemptedRemoveValue = board->getTile(row, column).getActualValue();
+					board->setTileActualValue(UNSOLVED, row, column);
+					solver.reset(board);
+
+					//if our solver fails to solve the board with the tile removed, put the tile back
+					if (!solver.solve())
+						board->setTileActualValue(attemptedRemoveValue, row, column);
+					else
+					{
+						//flag that we were able to remove something on this pass
+						removedElement = true;
+						limit--;
+					}
+				}
+
+			}
+		}
+	} while (limit != 0 && removedElement);
+	
 }
 
 /*
@@ -91,7 +157,7 @@ void PuzzleMaker::jumblePuzzle(int values[BOARD_SIZE][BOARD_SIZE])
 		col_b = -1;
 	int row_region = -1,
 		col_region = -1;
-	std::uniform_int_distribution<int> region_distribution(0, BOX_SIZE - 1);
+	std::uniform_int_distribution<int> region_distribution(0, REGION_SIZE - 1);
 
 	//random generator for generating a 50/50 chacne
 	std::uniform_int_distribution<int> fifty_fifty(0, 1);
@@ -103,14 +169,14 @@ void PuzzleMaker::jumblePuzzle(int values[BOARD_SIZE][BOARD_SIZE])
 		row_region = region_distribution(this->_generator);
 		col_region = region_distribution(this->_generator);
 
-		//(row_region * BOX_SIZE) gives us the start point of the actual region we've selected
-		row_a = (row_region * BOX_SIZE) + region_distribution(this->_generator);
+		//(row_region * REGION_SIZE) gives us the start point of the actual region we've selected
+		row_a = (row_region * REGION_SIZE) + region_distribution(this->_generator);
 		//but spin till we find a different row than row_a
-		while ((row_b = (row_region * BOX_SIZE) + region_distribution(this->_generator)) == row_a);
+		while ((row_b = (row_region * REGION_SIZE) + region_distribution(this->_generator)) == row_a);
 
-		col_a = (col_region * BOX_SIZE) + region_distribution(this->_generator);
+		col_a = (col_region * REGION_SIZE) + region_distribution(this->_generator);
 		//sping till we find different column than col_a
-		while ((col_b = (col_region * BOX_SIZE) + region_distribution(this->_generator)) == col_a);
+		while ((col_b = (col_region * REGION_SIZE) + region_distribution(this->_generator)) == col_a);
 
 		//50 50 chance of swapping row before column vs column before row
 		if (fifty_fifty(this->_generator) == 0) {

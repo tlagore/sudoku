@@ -154,6 +154,7 @@ void Interface::solveAllBoards()
 		}
 		solver.reset(boards[boardNum]);
 		printf("Solving board... %d\n", boardNum);
+		printf("Number of tiles to solve... %d\n", solver.getBoard()->getTilesLeftToSolve());
 		isSolved = solver.solve();
 
 	}
@@ -170,4 +171,6 @@ void Interface::solveAllBoards()
 
 Interface::~Interface()
 {
+	for (int i = 0; i < boards.size(); i++)
+		delete boards[i];
 }

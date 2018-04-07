@@ -55,19 +55,24 @@ Tile Board::getTile(int row, int column)
 	return *(board[row][column]);
 }
 
-void Board::removeTile(int row, int column) 
-{
-	board[row][column]->setActualValue(-1);
-}
-
+/*
+	Sets the tiles actual value to supplied value. 
+	If this takes a tile from an unsolved state to a solved state, the number of tiles to solve is decremented.
+	If this takes a tile form a solved state to an unsolved state, the number of tiles to solve is incremented.
+*/
 void Board::setTileActualValue(int value, int row, int column)
 {
-	if (board[row][column]->getActualValue() == -1)
-		tilesToSolve--;
+	if (board[row][column]->getActualValue() == UNSOLVED && value != UNSOLVED)
+		this->tilesToSolve--;
+	else if (board[row][column]->getActualValue() != UNSOLVED && value == UNSOLVED)
+		this->tilesToSolve++;
 
 	board[row][column]->setActualValue(value);
 }
 
+/*
+	Sets a specified tiles candidate values to a supplied set of candidate values
+*/
 void Board::setTileCandidateValues(int row, int col, unordered_set<int> candidateVals)
 {
 	Tile *tile = this->board[row][col];
@@ -78,40 +83,65 @@ void Board::setTileCandidateValues(int row, int col, unordered_set<int> candidat
 	}
 }
 
+/*
+	Adds a specified candidate value to a specified tile
+*/
 void Board::addTileCandidateValue(int value, int row, int col) {
 	this->board[row][col]->addCandidateValue(value);
 }
 
+/*
+	Clears all candidate values of a specified tile
+*/
 void Board::clearTileCandidateValues(int row, int col)
 {
 	this->board[row][col]->clearCandidateValues();
 }
 
+int Board::getTilesLeftToSolve()
+{
+	return this->tilesToSolve;
+}
+
+/*
+	Checks to see that the board is in a valid state.
+
+	Checks each row, each column, and each region for conflicts.
+
+	Note: isValidState does not confirm that a puzzle is a solvable, valid sudoku, only that the currently supplied
+	values do not conflict with any other value. For example, an empty puzzle would return as valid, even though it is 
+	an unsolvable puzzle.
+*/
 bool Board::isValidState()
 {
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
 		for (int column = 0; column < BOARD_SIZE; column++)
 		{
-			if (!isValidRow(*(board[row][column]))) {
-				printf("Bad row, row: %d col: %d\n", row, column);
-				return false;
-			}
+			if (board[row][column]->getActualValue() != UNSOLVED) {
+				if (!isValidRow(*(board[row][column]))) {
+					printf("Bad row, row: %d col: %d\n", row, column);
+					return false;
+				}
 
-			if (!isValidColumn(*(board[row][column]))) {
-				printf("Bad column, row: %d col: %d\n", row, column);
-				return false;
-			}
-				
-			if (!isValidBox(*(board[row][column]))) {
-				printf("Bad box, row: %d col: %d\n", row, column);
-				return false;
+				if (!isValidColumn(*(board[row][column]))) {
+					printf("Bad column, row: %d col: %d\n", row, column);
+					return false;
+				}
+
+				if (!isValidRegion(*(board[row][column]))) {
+					printf("Bad region, row: %d col: %d\n", row, column);
+					return false;
+				}
 			}
 		}
 	}
 	return true;
 }
 
+/*
+	checks to see if a row is in a valid state (no duplicates)
+*/
 bool Board::isValidRow(Tile tile)
 {
 	int currRow = tile.getRow();
@@ -130,6 +160,9 @@ bool Board::isValidRow(Tile tile)
 	return true;
 }
 
+/*
+	checks to see if a column is in a valid state (no duplicates)
+*/
 bool Board::isValidColumn(Tile tile)
 {
 	int currColumn = tile.getColumn();
@@ -147,20 +180,23 @@ bool Board::isValidColumn(Tile tile)
 	return true;
 }
 
-bool Board::isValidBox(Tile tile)
+/*
+	checks to see if a region is in a valid state (no duplicates)
+*/
+bool Board::isValidRegion(Tile tile)
 {
 	int currRow = tile.getRow();
 	int currColumn = tile.getColumn();
 	
-	int rowStartingPointOfBox = currRow - (currRow % 3);
-	int columnStartingPointOfBox = currColumn - (currColumn % 3);
+	int rowStartingPointOfRegion = currRow - (currRow % REGION_SIZE);
+	int columnStartingPointOfRegion = currColumn - (currColumn % REGION_SIZE);
 	
-	int boxRowMax = rowStartingPointOfBox + BOX_SIZE;
-	int boxColumnMax = columnStartingPointOfBox + BOX_SIZE;
+	int regionRowMax = rowStartingPointOfRegion + REGION_SIZE;
+	int regionColumnMax = columnStartingPointOfRegion + REGION_SIZE;
 
-	for (int row = rowStartingPointOfBox; row < boxRowMax; row++)
+	for (int row = rowStartingPointOfRegion; row < regionRowMax; row++)
 	{
-		for (int column = columnStartingPointOfBox; column < boxColumnMax; column++)
+		for (int column = columnStartingPointOfRegion; column < regionColumnMax; column++)
 		{
 			Tile currTile = *(board[row][column]);
 

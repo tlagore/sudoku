@@ -3,6 +3,8 @@
 
 Solver::Solver()
 {
+	this->board = nullptr;
+	this->numSolved = 0;
 }
 
 Solver::Solver(Board *board)
@@ -113,13 +115,13 @@ void Solver::removeColValues(int row, int column, unordered_set<int>* candidateV
 void Solver::removeRegionValues(int row, int column, unordered_set<int>* candidateValues)
 {
 	//find what the row/column is the start of the region
-	int regionRow = row - (row % BOX_SIZE);
-	int regionCol = column - (column % BOX_SIZE);
+	int regionRow = row - (row % REGION_SIZE);
+	int regionCol = column - (column % REGION_SIZE);
 	int tileValue;
 
 	//loop from region start row/column to the end of the region row/column
-	for (int curRow = regionRow; curRow < regionRow + BOX_SIZE; curRow++) {
-		for (int curCol = regionCol; curCol < regionCol + BOX_SIZE; curCol++) {
+	for (int curRow = regionRow; curRow < regionRow + REGION_SIZE; curRow++) {
+		for (int curCol = regionCol; curCol < regionCol + REGION_SIZE; curCol++) {
 			//skip the Tile we are checking for
 			if (curCol == column && curRow == row)
 				continue;
@@ -176,6 +178,10 @@ void Solver::solveTile(Tile tile) {
 */
 bool Solver::solve()
 {
+	if (board == nullptr) {
+		printf("Board unitialized. Please set board with a call to Solver.reset(Board*).\n");
+		return false;
+	}
 	generateCandidateValues();
 	
 	bool isSolved = false;
@@ -236,12 +242,12 @@ void Solver::cancelColumn(int value, int rowCurrTile, int column)
 */
 void Solver::cancelRegion(int value, int row, int column)
 {
-	int regionRow = row - (row % BOX_SIZE);
-	int regionCol = column - (column % BOX_SIZE);
+	int regionRow = row - (row % REGION_SIZE);
+	int regionCol = column - (column % REGION_SIZE);
 
-	for (int curRow = regionRow; curRow < regionRow + BOX_SIZE; curRow++)
+	for (int curRow = regionRow; curRow < regionRow + REGION_SIZE; curRow++)
 	{
-		for (int curCol = regionCol; curCol < regionCol + BOX_SIZE; curCol++)
+		for (int curCol = regionCol; curCol < regionCol + REGION_SIZE; curCol++)
 		{
 			if (curCol == column && curRow == row)
 				continue;
@@ -354,7 +360,7 @@ bool Solver::performSolve()
 			}
 
 			//checked once per region, as checkPointedTuple will find all pointed tuples in a region on call
-			if (row % BOX_SIZE == 0 && column % BOX_SIZE == 0)
+			if (row % REGION_SIZE == 0 && column % REGION_SIZE == 0)
 				foundSolution = checkPointedTuple(row, column) || foundSolution;
 		}
 	}
@@ -379,16 +385,16 @@ bool Solver::performSolve()
 */
 bool Solver::checkRegionLineReduction(int row, int column)
 {
-	int regionRow = row - (row % BOX_SIZE);
-	int regionCol = column - (column % BOX_SIZE);
+	int regionRow = row - (row % REGION_SIZE);
+	int regionCol = column - (column % REGION_SIZE);
 	unordered_set<int> candidateUnion;
 	Tile otherTile,
 		tile = this->board->getTile(row, column);
 	bool foundSolution = false;
 
-	for (int r = regionRow; r < regionRow + BOX_SIZE; r++)
+	for (int r = regionRow; r < regionRow + REGION_SIZE; r++)
 	{
-		for (int c = regionCol; c < regionCol + BOX_SIZE; c++)
+		for (int c = regionCol; c < regionCol + REGION_SIZE; c++)
 		{
 			if (c == column && r == row)
 				continue;
@@ -515,15 +521,15 @@ bool Solver::checkPointedTuple(int curRow, int curCol)
 	unordered_map<int, unordered_set<int>> rowCandidates;
 	unordered_map<int, unordered_set<int>> colCandidates;
 	//find start of region row
-	int regionRow = curRow - (curRow % BOX_SIZE);
+	int regionRow = curRow - (curRow % REGION_SIZE);
 	//find start of region column
-	int regionCol = curCol - (curCol % BOX_SIZE);
+	int regionCol = curCol - (curCol % REGION_SIZE);
 	bool performedCancellation = false;
 
 
-	for (int curRegionRow = regionRow; curRegionRow < regionRow + BOX_SIZE; curRegionRow++)
+	for (int curRegionRow = regionRow; curRegionRow < regionRow + REGION_SIZE; curRegionRow++)
 	{
-		for (int curRegionCol = regionCol; curRegionCol < regionCol + BOX_SIZE; curRegionCol++)
+		for (int curRegionCol = regionCol; curRegionCol < regionCol + REGION_SIZE; curRegionCol++)
 		{
 			// for each candidate value in this tile add it to the corresponding row/column set of candidate values
 			for (auto candidate : this->board->getTile(curRegionRow, curRegionCol).getCandidateValues())
@@ -643,12 +649,12 @@ int Solver::checkForValueInRegion(int currCandidate, int currRow, int currColumn
 
 	int validCancelFlag = -1;
 	int inRowCounter = 0, inColumnCounter = 0;
-	int regionRow = currRow - (currRow % BOX_SIZE);
-	int regionCol = currColumn - (currColumn % BOX_SIZE);
+	int regionRow = currRow - (currRow % REGION_SIZE);
+	int regionCol = currColumn - (currColumn % REGION_SIZE);
 
-	for (int row = regionRow; row < regionRow + BOX_SIZE; row++)
+	for (int row = regionRow; row < regionRow + REGION_SIZE; row++)
 	{
-		for (int col = regionCol; col < regionCol + BOX_SIZE; col++)
+		for (int col = regionCol; col < regionCol + REGION_SIZE; col++)
 		{
 			Tile otherTile = this->board->getTile(row, col);
 			int otherTileActualValue = otherTile.getActualValue();
@@ -691,13 +697,13 @@ inputs : (int)candidateValue - the value to cancel from the column
 */
 bool Solver::cancelRowSkipSameRegion(int candidateValue, int currRow, int currColumn)
 {
-	int regionCol = currColumn - (currColumn % BOX_SIZE);
+	int regionCol = currColumn - (currColumn % REGION_SIZE);
 	bool removedValue = false;
 
 	for (int col = 0; col < BOARD_SIZE; col++)
 
 	{
-		if (col >= regionCol && col < regionCol + BOX_SIZE)//isInRegionRow(regionCol, col))
+		if (col >= regionCol && col < regionCol + REGION_SIZE)//isInRegionRow(regionCol, col))
 			continue;
 		else
 		{
@@ -719,12 +725,12 @@ bool Solver::cancelRowSkipSameRegion(int candidateValue, int currRow, int currCo
 */
 bool Solver::cancelColumnSkipSameRegion(int candidateValue, int currRow, int currColumn)
 {
-	int regionRow = currRow - (currRow % BOX_SIZE);
+	int regionRow = currRow - (currRow % REGION_SIZE);
 	bool removedValue = false;
 
 	for (int row = 0; row < BOARD_SIZE; row++)
 	{
-		if (row >= regionRow && row < regionRow + BOX_SIZE)
+		if (row >= regionRow && row < regionRow + REGION_SIZE)
 			continue;
 		else
 		{
