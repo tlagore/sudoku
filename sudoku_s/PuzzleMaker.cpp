@@ -68,9 +68,6 @@ Board * PuzzleMaker::generateBoard(Difficulty diff)
 		delete board;
 		board = nullptr;
 	}
-	else {
-		board->printBoard();
-	}
 
 	return board;
 }
