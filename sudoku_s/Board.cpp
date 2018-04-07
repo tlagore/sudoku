@@ -20,7 +20,7 @@ Board::Board(const Board &rhs)
 	this->tilesToSolve = rhs.tilesToSolve;
 	for (int row = 0; row < BOARD_SIZE; row++) {
 		for (int column = 0; column < BOARD_SIZE; column++) {
-			this->board[row][column] = rhs.board[row][column];
+			this->board[row][column] = new Tile(rhs.board[row][column]->getActualValue(), row, column);
 		}
 	}
 }

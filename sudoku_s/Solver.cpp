@@ -790,9 +790,9 @@ Board* Solver::getBoard()
 
 void Solver::reset(Board *otherBoard) {
 	this->numSolved = 0;
-	//delete this->board;
+	delete this->board;
 	this->board = NULL;
-	this->board = otherBoard;
+	this->board = new Board(*otherBoard);
 }
 
 int Solver::getNumberSolved()
